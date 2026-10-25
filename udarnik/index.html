@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5efe3">
+<title>Ударник — ударения для ЕГЭ</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d2b53'/%3E%3Ctext x='32' y='46' font-size='38' font-family='Georgia' text-anchor='middle' fill='%23f5efe3'%3EА%3C/text%3E%3Cpath d='M30 10l8-6' stroke='%23e2533f' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=Lora:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --paper: #f5efe3; --card: #fffaf0; --ink: #1d2b53; --ink2: #4a557a; --muted: #8a8473; --line: #e4dccb; --red: #e2533f; --green: #2a9d6a; --gold: #e3a32b; --serif: Lora, Georgia, serif; }
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 17px/1.5 'Golos Text', system-ui, sans-serif; min-height: 100vh;
+  background-image: linear-gradient(transparent 31px, rgba(29,43,83,.05) 32px); background-size: 100% 32px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+header { display: flex; align-items: center; gap: 16px; padding: 24px 0; flex-wrap: wrap; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo .mark { width: 46px; height: 46px; border-radius: 13px; background: var(--ink); color: var(--paper); display: grid; place-items: center; font: 700 28px var(--serif); position: relative; }
+.logo .mark::after { content: ''; position: absolute; top: 4px; left: 22px; width: 10px; height: 4px; background: var(--red); border-radius: 2px; transform: rotate(-35deg); }
+.logo b { font: 700 26px var(--serif); }
+.logo small { display: block; color: var(--muted); font-size: 14px; }
+.hd { margin-left: auto; display: flex; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px 16px; box-shadow: 0 2px 0 var(--line); }
+.hd .ring { width: 46px; height: 46px; }
+.hd b { font-size: 22px; font-weight: 800; display: block; line-height: 1.1; }
+.hd span { font-size: 13px; color: var(--muted); }
+.hd .sep { width: 1px; height: 34px; background: var(--line); margin: 0 6px; }
+nav { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
+nav button { border: 1px solid var(--line); background: var(--card); padding: 10px 18px; border-radius: 12px; font-weight: 700; color: var(--ink2); box-shadow: 0 2px 0 var(--line); transition: transform .15s; }
+nav button:active { transform: translateY(2px); box-shadow: none; }
+nav button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); box-shadow: 0 2px 0 #0e1630; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 26px; box-shadow: 0 3px 0 var(--line); animation: in .4s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes in { from { opacity: 0; transform: translateY(10px); } }
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+.s4 { grid-column: span 4; } .s5 { grid-column: span 5; } .s6 { grid-column: span 6; } .s7 { grid-column: span 7; } .s8 { grid-column: span 8; } .s12 { grid-column: span 12; }
+.ct { font-weight: 800; font-size: 18px; margin-bottom: 14px; }
+.ct span { font-weight: 500; color: var(--muted); font-size: 14px; margin-left: 6px; }
+
+/* тренировка */
+.train { text-align: center; padding: 40px 26px 34px; position: relative; overflow: hidden; }
+.prog { display: flex; gap: 5px; justify-content: center; margin-bottom: 36px; }
+.prog i { width: 26px; height: 7px; border-radius: 4px; background: var(--line); transition: background .3s; }
+.prog i.ok { background: var(--green); } .prog i.bad { background: var(--red); } .prog i.cur { background: var(--ink); }
+.hint { color: var(--muted); font-size: 15px; margin-bottom: 20px; }
+.word { display: flex; justify-content: center; flex-wrap: wrap; gap: 2px; font: 600 clamp(44px, 9vw, 82px)/1.1 var(--serif); letter-spacing: .01em; margin-bottom: 26px; min-height: 100px; align-items: flex-end; }
+.word span { padding: 0 1px; }
+.word button { border: 0; background: none; font: inherit; padding: 0 3px; border-radius: 10px; position: relative; transition: background .15s, color .2s, transform .2s; }
+.word button:hover { background: rgba(29,43,83,.07); }
+.word button::after { content: ''; position: absolute; left: 20%; right: 20%; bottom: 2px; height: 4px; border-radius: 2px; background: var(--ink); opacity: .14; }
+.word button.ok { color: var(--green); transform: translateY(-6px); }
+.word button.bad { color: var(--red); text-decoration: line-through; text-decoration-thickness: 4px; }
+.word button.right { color: var(--green); transform: translateY(-6px); }
+.word button.ok::before, .word button.right::before { content: ''; position: absolute; top: -10px; left: 50%; width: 16px; height: 6px; background: currentColor; border-radius: 3px; transform: translateX(-30%) rotate(-35deg); }
+.word.locked button { pointer-events: none; }
+.word.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+.fb { min-height: 64px; font-size: 18px; }
+.fb .good { color: var(--green); font-weight: 800; font-size: 22px; }
+.fb .err { color: var(--red); font-weight: 800; }
+.fb .memo { font: 600 26px var(--serif); margin-top: 4px; }
+.fb .memo u { color: var(--green); text-decoration: none; border-bottom: 4px solid var(--green); }
+.fb .tip { color: var(--ink2); font-size: 15px; margin-top: 6px; }
+.btn { border: 0; background: var(--ink); color: var(--paper); padding: 14px 26px; border-radius: 14px; font-weight: 800; font-size: 17px; box-shadow: 0 3px 0 #0e1630; transition: transform .1s; }
+.btn:active { transform: translateY(3px); box-shadow: none; }
+.btn.ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 3px 0 var(--line); }
+.btn.red { background: var(--red); box-shadow: 0 3px 0 #a8382a; }
+.btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.kbd { font-size: 13px; color: var(--muted); margin-top: 16px; }
+.combo { position: absolute; top: 20px; right: 24px; font-weight: 800; color: var(--gold); font-size: 18px; transition: transform .2s; }
+.combo.pop { transform: scale(1.4); }
+
+/* итог */
+.res-big { font: 700 72px var(--serif); line-height: 1; }
+.res-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 18px 0; }
+.res-list span { padding: 6px 14px; border-radius: 10px; font: 600 20px var(--serif); background: #fdeeea; color: var(--red); }
+.res-list span.ok { background: #e6f4ee; color: var(--green); }
+
+/* статистика */
+.boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; align-items: end; height: 170px; }
+.boxes div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; font-size: 13px; color: var(--muted); text-align: center; }
+.boxes i { width: 100%; border-radius: 10px 10px 4px 4px; min-height: 4px; transition: height .6s cubic-bezier(.2,.8,.2,1); }
+.boxes b { color: var(--ink); font-size: 18px; }
+.kpi b { font: 700 44px var(--serif); display: block; line-height: 1.1; }
+.kpi span { color: var(--muted); font-size: 15px; }
+.groups { display: flex; flex-direction: column; gap: 14px; }
+.grp { display: grid; grid-template-columns: 150px 1fr 70px; gap: 12px; align-items: center; }
+.grp .tr { height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; display: flex; }
+.grp .tr i { height: 100%; }
+.grp b { text-align: right; }
+.hard { display: flex; flex-wrap: wrap; gap: 8px; }
+.hard span { padding: 6px 12px; border-radius: 10px; background: #fdeeea; font: 600 19px var(--serif); }
+.hard small { font: 600 12px 'Golos Text'; color: var(--red); margin-left: 6px; }
+.verdict { font-size: 19px; line-height: 1.55; }
+.verdict b { color: var(--red); }
+
+/* словарь */
+.search { width: 100%; padding: 14px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); font: inherit; font-size: 18px; outline: none; margin-bottom: 16px; color: var(--ink); }
+.search:focus { border-color: var(--ink); }
+.dict { columns: 4 200px; column-gap: 24px; }
+.dict h4 { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; margin: 14px 0 6px; break-after: avoid; }
+.dict div { font: 500 20px/1.7 var(--serif); break-inside: avoid; display: flex; align-items: center; gap: 8px; }
+.dict u { text-decoration: none; color: var(--red); font-weight: 700; }
+.dict .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+/* экзамен */
+.ex-list { display: flex; flex-direction: column; gap: 10px; max-width: 520px; margin: 0 auto 20px; text-align: left; }
+.ex-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); font: 600 26px var(--serif); transition: .15s; }
+.ex-item .n { font: 700 15px 'Golos Text'; color: var(--muted); width: 22px; }
+.ex-item.sel { border-color: var(--ink); background: #eef0f7; }
+.ex-item.ok { border-color: var(--green); background: #e6f4ee; }
+.ex-item.miss { border-color: var(--green); border-style: dashed; }
+.ex-item.bad { border-color: var(--red); background: #fdeeea; }
+.ex-item em { font-style: normal; color: var(--red); }
+.ex-item small { margin-left: auto; font: 600 14px 'Golos Text'; }
+
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--paper); padding: 12px 22px; border-radius: 12px; opacity: 0; transition: .3s; pointer-events: none; font-weight: 600; }
+.toast.on { opacity: 1; transform: translateX(-50%); }
+footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 30px; }
+footer button { background: none; border: 0; color: var(--muted); text-decoration: underline; }
+@media (max-width: 860px) { .s4, .s5, .s6, .s7, .s8 { grid-column: span 12; } .hd { margin-left: 0; width: 100%; justify-content: space-around; } }
+@media (max-width: 520px) { .wrap { padding: 0 14px 40px; } .grp { grid-template-columns: 110px 1fr 56px; } .card { padding: 20px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><div class="mark">А</div><div><b>Ударник</b><small>ударения к заданию №4 ЕГЭ по орфоэпическому минимуму ФИПИ</small></div></div>
+    <div class="hd" id="hd"></div>
+  </header>
+  <nav id="nav">
+    <button data-v="train" class="on">Тренировка</button>
+    <button data-v="exam">Как на ЕГЭ</button>
+    <button data-v="stats">Прогресс</button>
+    <button data-v="dict">Словарь</button>
+  </nav>
+  <main id="app"></main>
+  <footer>Прогресс хранится в этом браузере · <button id="reset">Сбросить прогресс</button></footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+// Орфоэпический минимум ФИПИ (задание 4). Заглавная буква — ударная гласная.
+const WORDS = {
+  'Существительные': 'аэропОрты бАнты бОроду бухгАлтеров вероисповЕдание граждАнство дефИс дешевИзна диспансЕр докумЕнт жалюзИ знАчимость Иксы каталОг квартАл киломЕтр кОнусы кОрысть крАны кремЕнь кремнЯ лЕкторов лыжнЯ мЕстностей намЕрение нарОст нЕдруг недУг некролОг ненАвистник нефтепровОд новостЕй нОгтя Отрочество партЕр портфЕль пОручни придАное призЫв сирОты созЫв сосредотОчение срЕдства стАтуя столЯр тамОжня тОрты тУфля цемЕнт цЕнтнер цепОчка шАрфы шОфер экспЕрт апострОф газопровОд мусоропровОд кладовАя локтЕй',
+  'Прилагательные': 'вернА знАчимый красИвее красИвейший кУхонный ловкА мозаИчный оптОвый прозорлИвый прозорлИва слИвовый грУшевый',
+  'Глаголы': 'бралА бралАсь взялА взялАсь влилАсь ворвалАсь воспринЯть воссоздалА вручИт гналА гналАсь добралА добралАсь дождалАсь дозвонИтся дозИровать ждалА жилОсь закУпорить занЯть зАнял занялА зАняли заперлА запломбировАть защемИт звалА звонИт кАшлянуть клАла клЕить кралАсь кровоточИть лгалА лилА лилАсь наврАла наделИт надорвалАсь назвалАсь накренИтся налилА нарвалА начАть нАчал началА нАчали обзвонИт облегчИть облилАсь обнялАсь обогналА ободралА ободрИть ободрИшься обострИть одолжИт озлОбить оклЕить окружИт опОшлить освЕдомиться отбылА отдалА откУпорить отозвалА отозвалАсь перезвонИт перелилА плодоносИть пломбировАть повторИт позвалА позвонИт полилА положИл понЯть понялА послАла прибЫть прИбыл прибылА прИбыло принЯть прИнял принялА прИняли рвалА сверлИт снялА совралА создалА сорвалА сорИт убралА углубИть укрепИт черпнУть щемИт',
+  'Причастия': 'зАгнутый зАнятый занятА зАпертый заселенА кровоточАщий нажИвший налИвший нанЯвшийся начАвший нАчатый прИнятый сОгнутый',
+  'Деепричастия': 'закУпорив начАв отдАв поднЯв понЯв прибЫв создАв',
+  'Наречия': 'вОвремя дОверху донЕльзя дОнизу дОсуха зАсветло зАтемно надОлго ненадОлго',
+};
+const VOW = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
+const LIST = Object.entries(WORDS).flatMap(([g, s]) => s.split(' ').map(raw => ({ raw, g, w: raw.toLowerCase(), i: [...raw].findIndex(c => VOW.includes(c) && c === c.toUpperCase() && c !== c.toLowerCase()) })));
+const INTERVAL = [0, 1, 2, 4, 8, 16]; // дней до повтора по коробкам Лейтнера
+const GROUP_COLORS = { 'Существительные': '#1d2b53', 'Прилагательные': '#e3a32b', 'Глаголы': '#e2533f', 'Причастия': '#2a9d6a', 'Деепричастия': '#7a5cc4', 'Наречия': '#2f86c9' };
+const KEY = 'udarnik-v1';
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const today = () => new Date().toISOString().slice(0, 10);
+const addD = (d, n) => { const x = new Date(d + 'T12:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+const plural = (n, a, b, c) => { const m = Math.abs(n) % 100, k = m % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const stressed = (x, tag = 'u') => [...x.w].map((c, k) => k === x.i ? `<${tag}>${c.toUpperCase()}</${tag}>` : c).join('');
+
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.cards) return s; } catch (e) { } return { cards: {}, days: {}, view: 'train', exams: [] }; }
+let S = load();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
+const card = w => S.cards[w] || { box: 0, due: today(), seen: 0, err: 0 };
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
+
+function answer(x, ok) {
+  const c = card(x.raw); c.seen++;
+  if (ok) { c.box = Math.min(5, c.box + 1); } else { c.box = 0; c.err++; }
+  c.due = addD(today(), INTERVAL[c.box]); c.last = today();
+  S.cards[x.raw] = c;
+  const d = S.days[today()] || (S.days[today()] = { n: 0, ok: 0 }); d.n++; if (ok) d.ok++;
+  save();
+}
+const learned = () => LIST.filter(x => card(x.raw).box >= 4).length;
+const dueList = () => LIST.filter(x => S.cards[x.raw] && card(x.raw).due <= today());
+function streak() { let n = 0, d = today(); if (!S.days[d]) d = addD(d, -1); while (S.days[d]) { n++; d = addD(d, -1); } return n; }
+
+// Подборка: сначала просроченные повторы, потом новые, потом слабые
+function pickSession(n = 15) {
+  const due = shuffle(dueList()).sort((a, b) => card(a.raw).box - card(b.raw).box);
+  const fresh = shuffle(LIST.filter(x => !S.cards[x.raw]));
+  const rest = shuffle(LIST.filter(x => S.cards[x.raw] && card(x.raw).due > today())).sort((a, b) => card(a.raw).box - card(b.raw).box);
+  const out = [...due.slice(0, n), ...fresh, ...rest].slice(0, n);
+  return shuffle(out.slice(0, n));
+}
+
+function ring(p) {
+  const r = 19, c = 2 * Math.PI * r;
+  return `<svg class="ring" viewBox="0 0 46 46"><circle cx="23" cy="23" r="${r}" fill="none" stroke="#e4dccb" stroke-width="6"/><circle cx="23" cy="23" r="${r}" fill="none" stroke="#2a9d6a" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c * p} ${c}" transform="rotate(-90 23 23)"/></svg>`;
+}
+function renderHd() {
+  const l = learned(), td = S.days[today()] || { n: 0, ok: 0 };
+  $('#hd').innerHTML = `${ring(l / LIST.length)}<div><b>${l} / ${LIST.length}</b><span>слов выучено</span></div><div class="sep"></div>
+    <div><b>${streak()}🔥</b><span>${plural(streak(), 'день', 'дня', 'дней')} подряд</span></div><div class="sep"></div>
+    <div><b>${td.n ? Math.round(td.ok / td.n * 100) + '%' : '—'}</b><span>сегодня · ${td.n} ${plural(td.n, 'ответ', 'ответа', 'ответов')}</span></div>`;
+}
+
+// ---------- тренировка ----------
+let T = null;
+function startTrain() { T = { q: pickSession(), k: 0, res: [], combo: 0, locked: false }; drawQ(); }
+function drawQ() {
+  if (T.k >= T.q.length) return drawResult();
+  const x = T.q[T.k], c = S.cards[x.raw];
+  $('#app').innerHTML = `<div class="card train">
+    <div class="combo" id="combo">${T.combo >= 3 ? '×' + T.combo + ' подряд' : ''}</div>
+    <div class="prog">${T.q.map((_, i) => `<i class="${i < T.k ? (T.res[i] ? 'ok' : 'bad') : i === T.k ? 'cur' : ''}"></i>`).join('')}</div>
+    <div class="hint">${c ? (c.err ? 'Это слово ты уже путал' : 'Повторение') : 'Новое слово'} · ${x.g.toLowerCase()} · нажми на ударную гласную</div>
+    <div class="word" id="word">${[...x.w].map((ch, i) => VOW.includes(ch) ? `<button data-i="${i}">${ch}</button>` : `<span>${ch}</span>`).join('')}</div>
+    <div class="fb" id="fb"></div>
+    <div class="kbd">${T.k + 1} из ${T.q.length}</div></div>`;
+}
+function pick(i) {
+  if (T.locked) return; T.locked = true;
+  const x = T.q[T.k], ok = i === x.i, w = $('#word');
+  w.classList.add('locked');
+  const btn = w.querySelector(`[data-i="${i}"]`);
+  answer(x, ok); T.res.push(ok);
+  if (ok) {
+    btn.classList.add('ok'); btn.textContent = btn.textContent.toUpperCase(); T.combo++;
+    $('#fb').innerHTML = `<div class="good">${['Верно!', 'Точно!', 'Отлично!', 'Так держать!'][Math.floor(Math.random() * 4)]}</div>`;
+    const cb = $('#combo'); if (T.combo >= 3) { cb.textContent = '×' + T.combo + ' подряд'; cb.classList.add('pop'); setTimeout(() => cb.classList.remove('pop'), 200); }
+    setTimeout(next, 750);
+  } else {
+    btn.classList.add('bad'); w.classList.add('shake'); T.combo = 0;
+    const r = w.querySelector(`[data-i="${x.i}"]`); r.classList.add('right'); r.textContent = r.textContent.toUpperCase();
+    $('#fb').innerHTML = `<div class="err">Не так. Запомни:</div><div class="memo">${stressed(x)}</div><div class="btns" style="margin-top:12px"><button class="btn" id="nextBtn">Дальше →</button></div><div class="kbd">или Enter / пробел · слово вернётся в этой же тренировке</div>`;
+    T.q.push(x); // ошибку повторим в конце
+  }
+}
+function next() { T.k++; T.locked = false; drawQ(); }
+function drawResult() {
+  const first = new Map(); T.q.forEach((x, i) => { if (!first.has(x.raw)) first.set(x.raw, T.res[i]); });
+  const ok = [...first.values()].filter(Boolean).length, n = first.size;
+  const words = [...first].map(([raw, r]) => ({ x: LIST.find(y => y.raw === raw), r }));
+  $('#app').innerHTML = `<div class="card train">
+    <div class="hint">Тренировка закончена</div>
+    <div class="res-big">${ok} / ${n}</div>
+    <div class="hint" style="margin-top:8px">${ok === n ? 'Без единой ошибки 🎉' : ok / n >= .8 ? 'Хороший результат — ошибки вернутся в повторении' : 'Ошибки — это нормально: эти слова будут попадаться чаще, пока не запомнишь'}</div>
+    <div class="res-list">${words.map(({ x, r }) => `<span class="${r ? 'ok' : ''}">${stressed(x, 'b')}</span>`).join('')}</div>
+    <div class="btns"><button class="btn" data-act="again">Ещё 15 слов</button><button class="btn ghost" data-act="stats">Мой прогресс</button></div></div>`;
+  renderHd();
+}
+
+// ---------- экзамен: 5 слов, отметь верно выделенные ----------
+let E = null;
+function startExam() {
+  const pool = shuffle(LIST).slice(0, 5);
+  E = { items: pool.map(x => { const ok = Math.random() < .5; if (ok) return { x, shown: x.i, ok }; const vs = [...x.w].map((c, i) => VOW.includes(c) && i !== x.i ? i : -1).filter(i => i >= 0); return vs.length ? { x, shown: vs[Math.floor(Math.random() * vs.length)], ok: false } : { x, shown: x.i, ok: true }; }), sel: new Set(), done: false };
+  if (!E.items.some(i => i.ok)) E.items[0] = { x: E.items[0].x, shown: E.items[0].x.i, ok: true };
+  drawExam();
+}
+function drawExam() {
+  const mark = (x, i) => [...x.w].map((c, k) => k === i ? c.toUpperCase() : c).join('');
+  $('#app').innerHTML = `<div class="card train">
+    <div class="hint" style="font-size:17px;color:var(--ink)"><b>Задание 4.</b> Укажите варианты ответов, в которых верно выделена буква, обозначающая ударный гласный звук.</div>
+    <div class="ex-list">${E.items.map((it, k) => {
+      let c = '', note = '';
+      if (E.done) { const s = E.sel.has(k); c = it.ok && s ? 'ok' : it.ok ? 'miss' : s ? 'bad' : ''; note = it.ok ? (s ? '<small style="color:var(--green)">верно ✓</small>' : '<small style="color:var(--green)">надо было выбрать</small>') : `<small style="color:var(--red)">правильно: ${stressed(it.x, 'b')}</small>`; }
+      else if (E.sel.has(k)) c = 'sel';
+      return `<button class="ex-item ${c}" data-ex="${k}"><span class="n">${k + 1})</span>${mark(it.x, it.shown)}${note}</button>`; }).join('')}</div>
+    ${E.done ? `<div class="fb"><div class="${E.score === 1 ? 'good' : 'err'}">${E.score === 1 ? 'Балл за задание получен!' : 'Балл не засчитан — нужно выбрать все верные и ни одного лишнего'}</div></div>
+      <div class="btns"><button class="btn" data-act="exam">Следующий вариант</button></div>
+      <div class="kbd">Решено вариантов: ${S.exams.length} · с баллом: ${S.exams.filter(Boolean).length}</div>`
+      : `<div class="btns"><button class="btn" data-act="check">Проверить</button></div>`}</div>`;
+}
+function checkExam() {
+  E.done = true;
+  const right = E.items.every((it, k) => it.ok === E.sel.has(k));
+  E.score = right ? 1 : 0; S.exams.push(E.score);
+  E.items.forEach((it, k) => { if (it.ok !== E.sel.has(k)) answer(it.x, false); else if (!it.ok || E.sel.has(k)) { const c = card(it.x.raw); c.seen++; S.cards[it.x.raw] = c; } });
+  const d = S.days[today()] || (S.days[today()] = { n: 0, ok: 0 }); d.n++; if (right) d.ok++;
+  save(); drawExam(); renderHd();
+}
+
+// ---------- прогресс ----------
+function drawStats() {
+  const boxes = [0, 1, 2, 3, 4, 5].map(b => LIST.filter(x => S.cards[x.raw] && card(x.raw).box === b).length);
+  const fresh = LIST.filter(x => !S.cards[x.raw]).length, mx = Math.max(fresh, ...boxes) || 1;
+  const hard = LIST.filter(x => card(x.raw).err).sort((a, b) => card(b.raw).err - card(a.raw).err).slice(0, 16);
+  const days = Object.values(S.days), total = days.reduce((s, d) => s + d.n, 0), okAll = days.reduce((s, d) => s + d.ok, 0);
+  const groups = Object.keys(WORDS).map(g => { const ws = LIST.filter(x => x.g === g); return { g, n: ws.length, l: ws.filter(x => card(x.raw).box >= 4).length, s: ws.filter(x => S.cards[x.raw] && card(x.raw).box < 4).length }; });
+  const worstG = groups.filter(g => g.s + g.l).sort((a, b) => a.l / a.n - b.l / b.n)[0];
+  const due = dueList().length, l = learned();
+  const ex = S.exams.slice(-20), exP = ex.length ? Math.round(ex.filter(Boolean).length / ex.length * 100) : null;
+  $('#app').innerHTML = `<div class="grid">
+    <div class="card s4 kpi"><b>${l}</b><span>из ${LIST.length} слов выучено (повторены без ошибки 4+ раза)</span></div>
+    <div class="card s4 kpi"><b>${total ? Math.round(okAll / total * 100) + '%' : '—'}</b><span>верных ответов за всё время · ${total} ${plural(total, 'ответ', 'ответа', 'ответов')}</span></div>
+    <div class="card s4 kpi"><b>${exP == null ? '—' : exP + '%'}</b><span>заданий «как на ЕГЭ» с баллом${ex.length ? ' (последние ' + ex.length + ')' : ' — попробуй вкладку «Как на ЕГЭ»'}</span></div>
+    <div class="card s12 verdict">${!total ? 'Начни с тренировки на 15 слов — после неё здесь появится разбор: какие слова путаешь и сколько осталось до полного минимума.' :
+      `Выучено <b style="color:var(--green)">${l} из ${LIST.length}</b> слов. ${due ? `Сегодня на повторение ждут <b>${due}</b> ${plural(due, 'слово', 'слова', 'слов')} — это главное, иначе они забудутся.` : 'Все повторы на сегодня сделаны.'} ${worstG ? `Слабее всего — <b>${worstG.g.toLowerCase()}</b> (${worstG.l} из ${worstG.n}).` : ''} ${l < LIST.length ? `При 15 новых словах в день весь минимум пройдёшь примерно за ${Math.ceil(fresh / 15) || 1} ${plural(Math.ceil(fresh / 15) || 1, 'день', 'дня', 'дней')}.` : 'Весь минимум выучен — держи повторами 🎉'}`}</div>
+    <div class="card s7"><div class="ct">Коробки повторения <span>чем правее, тем прочнее слово в памяти</span></div>
+      <div class="boxes">${[['Не начаты', fresh, '#d9d0bd'], ...boxes.map((n, b) => [b === 0 ? 'Ошибка' : b === 5 ? 'Навсегда' : 'Уровень ' + b, n, ['#e2533f', '#e3a32b', '#d6b83a', '#8fbf5a', '#2a9d6a', '#1d2b53'][b]])].map(([t, n, c]) => `<div><b>${n}</b><i style="height:${n / mx * 100}%;background:${c}"></i>${t}</div>`).join('')}</div></div>
+    <div class="card s5"><div class="ct">По частям речи</div><div class="groups">${groups.map(g => `<div class="grp"><span>${g.g}</span><div class="tr"><i style="width:${g.l / g.n * 100}%;background:${GROUP_COLORS[g.g]}"></i><i style="width:${g.s / g.n * 100}%;background:${GROUP_COLORS[g.g]};opacity:.3"></i></div><b>${g.l}/${g.n}</b></div>`).join('')}</div></div>
+    <div class="card s12"><div class="ct">Слова-ловушки <span>в которых ты ошибался чаще всего</span></div>${hard.length ? `<div class="hard">${hard.map(x => `<span>${stressed(x, 'b')}<small>×${card(x.raw).err}</small></span>`).join('')}</div><div class="btns" style="justify-content:flex-start;margin-top:16px"><button class="btn red" data-act="hard">Прогнать только ловушки</button></div>` : '<div style="color:var(--muted)">Ошибок пока нет</div>'}</div>
+  </div>`;
+}
+
+// ---------- словарь ----------
+function drawDict(q = '') {
+  const f = q.trim().toLowerCase().replace(/ё/g, 'е');
+  const col = x => { const c = S.cards[x.raw]; return !c ? '#d9d0bd' : c.box >= 4 ? '#2a9d6a' : c.box === 0 && c.err ? '#e2533f' : '#e3a32b'; };
+  const body = Object.keys(WORDS).map(g => { const ws = LIST.filter(x => x.g === g && (!f || x.w.replace(/ё/g, 'е').includes(f))).sort((a, b) => a.w.localeCompare(b.w, 'ru')); return ws.length ? `<h4>${g}</h4>${ws.map(x => `<div><i class="dot" style="background:${col(x)}"></i>${stressed(x)}</div>`).join('')}` : ''; }).join('');
+  if (!$('#dq')) $('#app').innerHTML = `<div class="card"><input class="search" id="dq" placeholder="Найти слово… (${LIST.length} в минимуме)" autocomplete="off"><div class="hint" style="text-align:left">● выучено &nbsp; ● в процессе &nbsp; ● последняя попытка с ошибкой &nbsp; ● не начато</div><div class="dict" id="dl"></div></div>`;
+  $('#dl').innerHTML = body || '<div style="color:var(--muted)">Такого слова в минимуме нет</div>';
+}
+
+// ---------- навигация ----------
+function render() {
+  const v = S.view || 'train';
+  $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  if (v === 'train') startTrain(); if (v === 'exam') startExam(); if (v === 'stats') drawStats(); if (v === 'dict') { $('#app').innerHTML = ''; drawDict(); }
+  renderHd();
+}
+$('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) { S.view = b.dataset.v; save(); render(); } };
+$('#app').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.i != null) pick(+b.dataset.i);
+  if (b.id === 'nextBtn') next();
+  if (b.dataset.act === 'again') startTrain();
+  if (b.dataset.act === 'stats') { S.view = 'stats'; save(); render(); }
+  if (b.dataset.act === 'hard') { S.view = 'train'; save(); $$('#nav button').forEach(x => x.classList.toggle('on', x.dataset.v === 'train')); const h = LIST.filter(x => card(x.raw).err).sort((a, b) => card(b.raw).err - card(a.raw).err).slice(0, 15); T = { q: shuffle(h), k: 0, res: [], combo: 0, locked: false }; drawQ(); }
+  if (b.dataset.ex != null && !E.done) { const k = +b.dataset.ex; E.sel.has(k) ? E.sel.delete(k) : E.sel.add(k); drawExam(); }
+  if (b.dataset.act === 'check') checkExam();
+  if (b.dataset.act === 'exam') startExam();
+});
+$('#app').addEventListener('input', e => { if (e.target.id === 'dq') drawDict(e.target.value); });
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && $('#nextBtn')) { e.preventDefault(); next(); }
+  if (S.view === 'train' && T && !T.locked && /^[1-9]$/.test(e.key)) { const bs = $$('#word button'); const b = bs[+e.key - 1]; if (b) pick(+b.dataset.i); }
+});
+$('#reset').onclick = () => { if (confirm('Сбросить весь прогресс?')) { S = { cards: {}, days: {}, view: 'train', exams: [] }; save(); render(); toast('Прогресс сброшен'); } };
+render();
+</script>
+</body>
+</html>

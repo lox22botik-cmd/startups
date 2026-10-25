@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f4f5fb">
+<title>Заказы — CRM фрилансера</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Crect x='14' y='16' width='10' height='32' rx='3' fill='%23fff'/%3E%3Crect x='27' y='16' width='10' height='22' rx='3' fill='%23fff' fill-opacity='.75'/%3E%3Crect x='40' y='16' width='10' height='14' rx='3' fill='%23fff' fill-opacity='.5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #f4f5fb; --card: #fff; --ink: #161a33; --ink2: #555b7a; --muted: #9196b0; --line: #e6e8f2; --acc: #4f46e5; --acc2: #eef0ff; --ok: #12a46b; --warn: #f08c00; --bad: #e5484d; --mono: 'JetBrains Mono', monospace;
+  --c0: #8b8fa8; --c1: #4f46e5; --c2: #f08c00; --c3: #12a46b; }
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.45 Rubik, system-ui, sans-serif; min-height: 100vh; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 20px 60px; }
+header { display: flex; align-items: center; gap: 16px; padding: 22px 0 18px; flex-wrap: wrap; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo .m { width: 44px; height: 44px; border-radius: 13px; background: var(--acc); display: grid; place-items: center; box-shadow: 0 8px 18px -8px var(--acc); }
+.logo b { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+.logo small { display: block; color: var(--ink2); font-size: 14px; }
+.timer-hd { margin-left: auto; display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 8px 10px 8px 16px; }
+.timer-hd .t { font: 700 22px var(--mono); }
+.timer-hd .n { font-size: 13px; color: var(--ink2); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.timer-hd.run .t { color: var(--bad); }
+.timer-hd .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+nav { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; align-items: center; }
+nav button { border: 0; background: none; padding: 12px 16px; font-weight: 600; color: var(--ink2); border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+nav button.on { color: var(--acc); border-color: var(--acc); }
+nav .add { margin: 0 0 4px auto; background: var(--acc); color: #fff; border-radius: 11px; padding: 9px 16px; border: 0; white-space: nowrap; }
+
+.kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 18px; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; animation: in .4s both; }
+.kpi b { font: 700 26px var(--mono); letter-spacing: -.03em; display: block; }
+.kpi span { font-size: 14px; color: var(--ink2); }
+.kpi small { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; }
+@keyframes in { from { opacity: 0; transform: translateY(8px); } }
+
+/* канбан */
+.board { display: grid; grid-template-columns: repeat(4, minmax(250px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 6px; }
+.col { background: #eceef7; border-radius: 18px; padding: 12px; min-height: 300px; transition: background .15s; }
+.col.over { background: var(--acc2); box-shadow: inset 0 0 0 2px var(--acc); }
+.col h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; padding: 4px 6px 12px; }
+.col h3 i { width: 10px; height: 10px; border-radius: 50%; }
+.col h3 span { color: var(--muted); font-weight: 500; }
+.col h3 em { margin-left: auto; font: 600 13px var(--mono); color: var(--ink2); font-style: normal; }
+.oc { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--line); cursor: grab; transition: transform .15s, box-shadow .15s; position: relative; animation: in .3s both; }
+.oc:hover { box-shadow: 0 10px 24px -14px rgba(22,26,51,.4); transform: translateY(-2px); }
+.oc.drag { opacity: .4; }
+.oc .tt { font-weight: 700; font-size: 16px; margin-bottom: 4px; padding-right: 30px; }
+.oc .cl { color: var(--ink2); font-size: 14px; margin-bottom: 10px; }
+.oc .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.oc .price { font: 700 17px var(--mono); margin-right: auto; }
+.tg { padding: 3px 8px; border-radius: 7px; background: var(--bg); color: var(--ink2); font-weight: 600; font-size: 12px; }
+.tg.late { background: #fdecec; color: var(--bad); } .tg.soon { background: #fff4e0; color: var(--warn); } .tg.paid { background: #e3f6ee; color: var(--ok); }
+.oc .play { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 10px; border: 0; background: var(--bg); display: grid; place-items: center; }
+.oc .play.run { background: var(--bad); color: #fff; }
+.oc .bar { height: 4px; background: var(--bg); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.oc .bar i { display: block; height: 100%; background: var(--acc); }
+.oc .mv { display: none; gap: 6px; margin-top: 10px; }
+.oc .mv button { flex: 1; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 6px; font-size: 13px; font-weight: 600; }
+.colempty { color: var(--muted); font-size: 14px; text-align: center; padding: 20px 8px; border: 2px dashed #d9dcea; border-radius: 12px; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px; animation: in .4s both; }
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+.s4 { grid-column: span 4; } .s5 { grid-column: span 5; } .s6 { grid-column: span 6; } .s7 { grid-column: span 7; } .s8 { grid-column: span 8; } .s12 { grid-column: span 12; }
+.ct { font-weight: 700; font-size: 17px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.ct span { color: var(--muted); font-weight: 500; font-size: 14px; }
+.mbars { display: flex; gap: 12px; align-items: flex-end; height: 200px; }
+.mbars div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; font-size: 13px; color: var(--ink2); }
+.mbars i { width: 100%; max-width: 64px; border-radius: 10px 10px 4px 4px; background: linear-gradient(var(--acc), #8b85ff); min-height: 3px; transition: height .6s cubic-bezier(.2,.8,.2,1); }
+.mbars b { font: 700 13px var(--mono); color: var(--ink); }
+.verdict { font-size: 18px; line-height: 1.6; }
+.verdict b { color: var(--acc); }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { text-align: left; font-size: 13px; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.tbl td { padding: 12px 10px; border-bottom: 1px solid var(--line); }
+.tbl .n { font-family: var(--mono); text-align: right; white-space: nowrap; }
+.plat { display: flex; flex-direction: column; gap: 10px; }
+.plat div { display: grid; grid-template-columns: 110px 1fr 100px; gap: 10px; align-items: center; }
+.plat .tr { height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+.plat .tr i { display: block; height: 100%; background: var(--acc); border-radius: 5px; }
+.plat b { font-family: var(--mono); text-align: right; }
+
+/* шаблоны */
+.tpl { border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.tpl h4 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 16px; }
+.tpl h4 .sp { flex: 1; }
+.tpl pre { white-space: pre-wrap; font: 15px/1.55 Rubik; color: var(--ink2); background: var(--bg); padding: 12px 14px; border-radius: 10px; }
+.tpl pre mark { background: var(--acc2); color: var(--acc); border-radius: 4px; padding: 0 3px; }
+.vars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+
+.btn { border: 0; background: var(--acc); color: #fff; padding: 11px 18px; border-radius: 11px; font-weight: 700; transition: transform .1s, filter .15s; }
+.btn:hover { filter: brightness(1.08); } .btn:active { transform: scale(.97); }
+.btn.ghost { background: var(--bg); color: var(--ink); }
+.btn.danger { background: #fdecec; color: var(--bad); }
+.btn.sm { padding: 7px 12px; font-size: 14px; }
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink2); }
+input, select, textarea { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 10px 12px; font-size: 16px; outline: none; width: 100%; transition: border-color .15s, box-shadow .15s; }
+input:focus, select:focus, textarea:focus { border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc2); }
+.fg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.fg .w2 { grid-column: span 2; } .fg .w4 { grid-column: span 4; }
+.net { background: var(--acc2); border-radius: 12px; padding: 12px 14px; font-size: 15px; display: flex; gap: 18px; flex-wrap: wrap; }
+.net b { font-family: var(--mono); }
+.checks { display: flex; flex-direction: column; gap: 6px; }
+.ck { display: flex; align-items: center; gap: 10px; }
+.ck input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--acc); flex: none; }
+.ck input[type=text] { padding: 7px 10px; }
+.ck.done input[type=text] { text-decoration: line-through; color: var(--muted); }
+.logs { font-size: 14px; color: var(--ink2); display: flex; flex-direction: column; gap: 4px; max-height: 120px; overflow: auto; }
+dialog { border: 0; border-radius: 22px; padding: 0; width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 30px); background: var(--card); color: var(--ink); box-shadow: 0 30px 80px -20px rgba(22,26,51,.5); }
+dialog::backdrop { background: rgba(22,26,51,.45); backdrop-filter: blur(3px); }
+dialog[open] { animation: in .25s; }
+.dh { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.dh b { font-size: 19px; }
+.dh .x { border: 0; background: var(--bg); width: 34px; height: 34px; border-radius: 10px; }
+.db { padding: 18px 22px; display: flex; flex-direction: column; gap: 16px; }
+.df { display: flex; gap: 10px; padding: 0 22px 20px; flex-wrap: wrap; }
+.df .sp { flex: 1; }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 12px; opacity: 0; transition: .3s; pointer-events: none; font-weight: 600; z-index: 10; }
+.toast.on { opacity: 1; transform: translateX(-50%); }
+footer { color: var(--muted); font-size: 13px; text-align: center; margin-top: 30px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+footer button { background: none; border: 0; color: var(--muted); text-decoration: underline; }
+@media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, 1fr); } .s4, .s5, .s6, .s7, .s8 { grid-column: span 12; } .vars { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .board { grid-template-columns: 1fr; } .oc .mv { display: flex; } .fg { grid-template-columns: repeat(2, 1fr); } .fg .w4 { grid-column: span 2; } .timer-hd { margin-left: 0; width: 100%; } .wrap { padding: 0 14px 40px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><div class="m"><svg width="26" height="26" viewBox="0 0 26 26"><rect x="2" y="3" width="6" height="20" rx="2" fill="#fff"/><rect x="10" y="3" width="6" height="14" rx="2" fill="#fff" fill-opacity=".75"/><rect x="18" y="3" width="6" height="9" rx="2" fill="#fff" fill-opacity=".5"/></svg></div>
+      <div><b>Заказы</b><small>заказы, дедлайны, часы и деньги фрилансера в одном окне</small></div></div>
+    <div class="timer-hd" id="timerHd"></div>
+  </header>
+  <nav id="nav">
+    <button data-v="board" class="on">Доска</button>
+    <button data-v="money">Деньги</button>
+    <button data-v="clients">Клиенты</button>
+    <button data-v="tpl">Шаблоны откликов</button>
+    <button class="add" id="addBtn">+ Заказ</button>
+  </nav>
+  <main id="app"></main>
+  <footer><span>Данные хранятся только в этом браузере</span><button id="expBtn">Скачать копию</button><button id="impBtn">Загрузить копию</button><input type="file" id="impFile" accept=".json" hidden></footer>
+</div>
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+const KEY = 'zakazy-v1';
+const COLS = [['lead', 'Переговоры', 'var(--c0)'], ['work', 'В работе', 'var(--c1)'], ['review', 'На проверке', 'var(--c2)'], ['done', 'Сдано', 'var(--c3)']];
+const PLATS = [['kwork', 'Kwork', 20], ['fl', 'FL.ru', 10], ['tg', 'Telegram', 0], ['direct', 'Напрямую', 0], ['other', 'Другое', 0]];
+const DEF_TPL = [
+  { id: 't1', name: 'Первый отклик', text: 'Здравствуйте, {клиент}! Внимательно прочитал задание. Сделаю за {срок}, стоимость — {цена}.\n\nКак буду делать:\n1. Уточню детали и пришлю план.\n2. Покажу промежуточный результат.\n3. Внесу правки до полного совпадения с ожиданиями.\n\nПримеры работ: {портфолио}' },
+  { id: 't2', name: 'Уточнение деталей', text: '{клиент}, чтобы сделать точно как нужно, уточню:\n— есть ли примеры, которые нравятся?\n— к какому сроку нужен результат?\n— кто будет пользоваться и с каких устройств?\n\nПосле ответа сразу начну.' },
+  { id: 't3', name: 'Сдача работы', text: 'Готово! Результат: {ссылка}\n\nЧто сделано — по пунктам из задания. Если что-то хочется поправить — напишите, внесу правки. Буду благодарен за отзыв 🙏' },
+  { id: 't4', name: 'Напоминание об оплате', text: '{клиент}, добрый день! Работа сдана {дата}. Подскажите, когда сможете принять и оплатить заказ? Если есть замечания — с радостью поправлю.' },
+];
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+const today = () => new Date().toISOString().slice(0, 10);
+const rub = v => Math.round(v || 0).toLocaleString('ru-RU') + ' ₽';
+const plural = (n, a, b, c) => { const m = Math.abs(n) % 100, k = m % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
+const days = (a, b) => Math.round((new Date(b + 'T12:00') - new Date(a + 'T12:00')) / 864e5);
+const fdate = d => new Date(d + 'T12:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+const hm = ms => { const m = Math.round(ms / 60000); return m < 60 ? m + ' мин' : Math.floor(m / 60) + ' ч ' + (m % 60 ? m % 60 + ' мин' : ''); };
+const clock = ms => { const s = Math.floor(ms / 1000); return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(x => String(x).padStart(2, '0')).join(':'); };
+
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.orders)) return s; } catch (e) { } return { orders: [], tpl: DEF_TPL, view: 'board', timer: null, vars: {} }; }
+let S = load();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не удалось сохранить'); } };
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2400); }
+
+const fee = o => PLATS.find(p => p[0] === o.plat)?.[2] ?? 0;
+const net = o => (o.price || 0) * (1 - (o.fee ?? fee(o)) / 100);
+const spent = o => (o.logs || []).reduce((s, l) => s + l.ms, 0) + (S.timer && S.timer.id === o.id ? Date.now() - S.timer.start : 0);
+const perHour = o => { const h = spent(o) / 36e5; return h > 0.05 ? net(o) / h : null; };
+function dl(o) {
+  if (!o.deadline || o.col === 'done') return '';
+  const d = days(today(), o.deadline);
+  return d < 0 ? `<span class="tg late">просрочен на ${-d} ${plural(-d, 'день', 'дня', 'дней')}</span>` : d <= 2 ? `<span class="tg soon">${d === 0 ? 'сдать сегодня' : d === 1 ? 'сдать завтра' : 'через 2 дня'}</span>` : `<span class="tg">до ${fdate(o.deadline)}</span>`;
+}
+
+// ---------- таймер ----------
+function toggleTimer(id) {
+  if (S.timer) {
+    const o = S.orders.find(x => x.id === S.timer.id), ms = Date.now() - S.timer.start;
+    if (o && ms > 30000) (o.logs = o.logs || []).push({ date: today(), ms });
+    const was = S.timer.id; S.timer = null; save();
+    if (o) toast(`+${hm(ms)} к «${o.title}»`);
+    if (was === id) return render();
+  }
+  if (id) { S.timer = { id, start: Date.now() }; const o = S.orders.find(x => x.id === id); if (o && o.col === 'lead') o.col = 'work'; save(); }
+  render();
+}
+function renderTimer() {
+  const el = $('#timerHd'), o = S.timer && S.orders.find(x => x.id === S.timer.id);
+  if (o) { el.className = 'timer-hd run'; el.innerHTML = `<i class="dot"></i><div><div class="t">${clock(Date.now() - S.timer.start)}</div><div class="n">${esc(o.title)}</div></div><button class="btn sm danger" data-timer="${o.id}">Стоп</button>`; }
+  else { const wk = S.orders.flatMap(x => x.logs || []).filter(l => days(l.date, today()) < 7).reduce((s, l) => s + l.ms, 0); el.className = 'timer-hd'; el.innerHTML = `<div><div class="t">${hm(wk) === '0 мин' ? '0 ч' : hm(wk)}</div><div class="n">работы за 7 дней · ▶ на карточке — старт</div></div>`; }
+}
+setInterval(() => { if (S.timer) { const ck = $("#timerHd .t"); if (ck && $("#timerHd").classList.contains("run")) ck.textContent = clock(Date.now() - S.timer.start); else renderTimer(); const t = $(`[data-spent="${S.timer.id}"]`); if (t) t.textContent = hm(spent(S.orders.find(x => x.id === S.timer.id))); } }, 1000);
+
+// ---------- KPI ----------
+function kpis() {
+  const m = today().slice(0, 7), done = S.orders.filter(o => o.col === 'done');
+  const month = done.filter(o => (o.doneAt || '').slice(0, 7) === m).reduce((s, o) => s + net(o), 0);
+  const pipe = S.orders.filter(o => o.col !== 'done').reduce((s, o) => s + net(o), 0);
+  const unpaid = done.filter(o => !o.paid).reduce((s, o) => s + net(o), 0);
+  const hrs = done.reduce((s, o) => s + spent(o), 0) / 36e5, earned = done.filter(o => spent(o) > 0).reduce((s, o) => s + net(o), 0);
+  const soon = S.orders.filter(o => o.col !== 'done' && o.deadline && days(today(), o.deadline) <= 2).length;
+  return `<div class="kpis">
+    <div class="kpi"><span>Заработано в этом месяце</span><b>${rub(month)}</b><small>после комиссий площадок</small></div>
+    <div class="kpi"><span>В работе на сумму</span><b>${rub(pipe)}</b><small>${S.orders.filter(o => o.col !== 'done').length} ${plural(S.orders.filter(o => o.col !== 'done').length, 'заказ', 'заказа', 'заказов')}</small></div>
+    <div class="kpi"><span>Ждёт оплаты</span><b style="color:${unpaid ? 'var(--warn)' : ''}">${rub(unpaid)}</b><small>сдано, но не оплачено</small></div>
+    <div class="kpi"><span>Средний доход в час</span><b>${hrs > 0.1 ? rub(earned / hrs) : '—'}</b><small>${hrs > 0.1 ? 'по ' + Math.round(hrs) + ' ч на сданных' : 'включай таймер на заказах'}</small></div>
+    <div class="kpi"><span>Горящие дедлайны</span><b style="color:${soon ? 'var(--bad)' : 'var(--ok)'}">${soon}</b><small>${soon ? 'сдать за 2 дня или просрочено' : 'всё под контролем'}</small></div></div>`;
+}
+
+// ---------- экраны ----------
+const V = {};
+V.board = () => kpis() + `<div class="board">${COLS.map(([k, n, c], ci) => {
+  const list = S.orders.filter(o => o.col === k).sort((a, b) => (a.deadline || '9').localeCompare(b.deadline || '9'));
+  return `<div class="col" data-col="${k}"><h3><i style="background:${c}"></i>${n} <span>${list.length}</span><em>${list.length ? rub(list.reduce((s, o) => s + net(o), 0)) : ''}</em></h3>
+    ${list.map(o => { const ch = o.checks || [], cd = ch.filter(x => x.d).length, run = S.timer?.id === o.id; return `<div class="oc" draggable="true" data-id="${o.id}">
+      ${k !== 'done' ? `<button class="play ${run ? 'run' : ''}" data-timer="${o.id}" title="${run ? 'Остановить' : 'Засечь время'}">${run ? '■' : '▶'}</button>` : ''}
+      <div class="tt">${esc(o.title)}</div><div class="cl">${esc(o.client || 'без клиента')} · ${PLATS.find(p => p[0] === o.plat)?.[1] || ''}</div>
+      <div class="row"><span class="price">${rub(net(o))}</span>${dl(o)}${k === 'done' ? `<span class="tg ${o.paid ? 'paid' : 'soon'}">${o.paid ? 'оплачено' : 'ждёт оплаты'}</span>` : ''}${spent(o) ? `<span class="tg" data-spent="${o.id}">${hm(spent(o))}</span>` : ''}</div>
+      ${ch.length ? `<div class="bar"><i style="width:${cd / ch.length * 100}%"></i></div>` : ''}
+      <div class="mv">${ci > 0 ? `<button data-mv="${o.id}|${COLS[ci - 1][0]}">← ${COLS[ci - 1][1]}</button>` : ''}${ci < 3 ? `<button data-mv="${o.id}|${COLS[ci + 1][0]}">${COLS[ci + 1][1]} →</button>` : ''}</div></div>`; }).join('') || `<div class="colempty">${ci === 0 ? 'Новые заказы и отклики' : 'Перетащи карточку сюда'}</div>`}</div>`;
+}).join('')}</div>`;
+
+V.money = () => {
+  const done = S.orders.filter(o => o.col === 'done');
+  const ms = [...Array(6)].map((_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i); const k = d.toISOString().slice(0, 7); return { k, n: d.toLocaleDateString('ru-RU', { month: 'short' }), v: done.filter(o => (o.doneAt || '').slice(0, 7) === k).reduce((s, o) => s + net(o), 0) }; });
+  const mx = Math.max(...ms.map(m => m.v)) || 1;
+  const byPlat = PLATS.map(([k, n]) => ({ n, v: done.filter(o => o.plat === k).reduce((s, o) => s + net(o), 0), fee: done.filter(o => o.plat === k).reduce((s, o) => s + (o.price - net(o)), 0) })).filter(p => p.v).sort((a, b) => b.v - a.v);
+  const pmx = byPlat[0]?.v || 1, feeAll = byPlat.reduce((s, p) => s + p.fee, 0);
+  const hourly = done.map(o => ({ o, h: perHour(o) })).filter(x => x.h).sort((a, b) => b.h - a.h);
+  const total = done.reduce((s, o) => s + net(o), 0), cur = ms[5].v, prev = ms[4].v;
+  return kpis() + `<div class="grid">
+    <div class="card s8"><div class="ct">Доход по месяцам <span>сданные заказы, после комиссий</span></div><div class="mbars">${ms.map(m => `<div><b>${m.v ? rub(m.v) : ''}</b><i style="height:${m.v / mx * 100}%"></i>${m.n}</div>`).join('')}</div></div>
+    <div class="card s4 verdict"><div class="ct">Вывод</div>${!done.length ? 'Сдай первый заказ — здесь появится разбор: сколько зарабатываешь, где выгоднее и какие заказы стоит брать.' :
+      `Всего заработано <b>${rub(total)}</b>. ${prev ? `Этот месяц ${cur >= prev ? 'лучше' : 'слабее'} прошлого на <b>${Math.abs(Math.round((cur / prev - 1) * 100))}%</b>.` : ''} ${feeAll ? `Комиссии площадок забрали <b>${rub(feeAll)}</b> — постоянных клиентов выгодно переводить на прямую работу.` : ''} ${hourly.length >= 2 ? `Самый выгодный заказ — «${esc(hourly[0].o.title)}» (${rub(hourly[0].h)}/ч), самый невыгодный — «${esc(hourly[hourly.length - 1].o.title)}» (${rub(hourly[hourly.length - 1].h)}/ч).` : ''}`}</div>
+    <div class="card s5"><div class="ct">Площадки</div>${byPlat.length ? `<div class="plat">${byPlat.map(p => `<div><span>${p.n}</span><div class="tr"><i style="width:${p.v / pmx * 100}%"></i></div><b>${rub(p.v)}</b></div>`).join('')}</div>` : '<div style="color:var(--muted)">Нет сданных заказов</div>'}</div>
+    <div class="card s7"><div class="ct">Доход в час по заказам <span>сколько реально стоил твой час</span></div>${hourly.length ? `<table class="tbl"><tr><th>Заказ</th><th class="n">Время</th><th class="n">Получено</th><th class="n">₽ / час</th></tr>${hourly.slice(0, 8).map(x => `<tr><td>${esc(x.o.title)}</td><td class="n">${hm(spent(x.o))}</td><td class="n">${rub(net(x.o))}</td><td class="n"><b>${rub(x.h)}</b></td></tr>`).join('')}</table>` : '<div style="color:var(--muted)">Засекай время кнопкой ▶ на карточке — появится реальная цена часа</div>'}</div>
+  </div>`;
+};
+
+V.clients = () => {
+  const m = new Map();
+  for (const o of S.orders) { const k = (o.client || 'Без имени').trim(); if (!m.has(k)) m.set(k, []); m.get(k).push(o); }
+  const list = [...m].map(([n, os]) => ({ n, os, sum: os.filter(o => o.col === 'done').reduce((s, o) => s + net(o), 0), last: os.map(o => o.created || '').sort().pop() })).sort((a, b) => b.sum - a.sum);
+  return `<div class="card"><div class="ct">Клиенты <span>${list.length}</span></div>${list.length ? `<table class="tbl"><tr><th>Клиент</th><th>Заказов</th><th>Где</th><th class="n">Заработано</th><th class="n">Последний</th></tr>
+    ${list.map(c => `<tr><td><b>${esc(c.n)}</b>${c.os.length > 1 ? ' <span class="tg paid">постоянный</span>' : ''}</td><td>${c.os.length} (${c.os.filter(o => o.col === 'done').length} сдано)</td><td>${[...new Set(c.os.map(o => PLATS.find(p => p[0] === o.plat)?.[1]))].join(', ')}</td><td class="n"><b>${rub(c.sum)}</b></td><td class="n">${c.last ? fdate(c.last) : ''}</td></tr>`).join('')}</table>
+    <p style="color:var(--ink2);margin-top:14px">Повторный клиент обходится в разы дешевле нового: напомни о себе тем, кто заказывал больше месяца назад.</p>` : '<div style="color:var(--muted)">Клиенты появятся вместе с заказами</div>'}</div>`;
+};
+
+V.tpl = () => {
+  const v = Object.assign({ клиент: '', срок: '3 дня', цена: '', портфолио: '', ссылка: '', дата: fdate(today()) }, S.vars);
+  const fill = t => esc(t).replace(/\{([а-яё]+)\}/gi, (m, k) => v[k] ? `<mark>${esc(v[k])}</mark>` : `<mark>${m}</mark>`);
+  return `<div class="card"><div class="ct">Шаблоны откликов <span>впиши данные один раз — подставятся во все шаблоны</span></div>
+    <div class="vars">${['клиент', 'срок', 'цена', 'портфолио'].map(k => `<label class="f">{${k}}<input data-var="${k}" value="${esc(v[k])}" placeholder="${{ клиент: 'Иван', срок: '3 дня', цена: '5 000 ₽', портфолио: 'ссылка на работы' }[k]}"></label>`).join('')}</div>
+    ${S.tpl.map(t => `<div class="tpl"><h4>${esc(t.name)}<span class="sp"></span><button class="btn sm" data-copy="${t.id}">Скопировать</button><button class="btn sm ghost" data-edtpl="${t.id}">✏️</button></h4><pre>${fill(t.text)}</pre></div>`).join('')}
+    <button class="btn ghost" data-edtpl="">+ Свой шаблон</button></div>`;
+};
+
+// ---------- форма заказа ----------
+function orderForm(o) {
+  const isNew = !o; o = o || { title: '', client: '', plat: 'kwork', price: '', deadline: '', col: 'lead', note: '', checks: [], logs: [] };
+  const d = $('#dlg');
+  d.innerHTML = `<div class="dh"><b>${isNew ? 'Новый заказ' : esc(o.title)}</b><button class="x" data-close>✕</button></div>
+  <div class="db"><div class="fg">
+    <label class="f w4">Что нужно сделать<input id="oTitle" value="${esc(o.title)}" placeholder="Лендинг для кофейни"></label>
+    <label class="f w2">Клиент<input id="oClient" value="${esc(o.client)}" list="cl" placeholder="Имя или ник"><datalist id="cl">${[...new Set(S.orders.map(x => x.client).filter(Boolean))].map(c => `<option value="${esc(c)}">`).join('')}</datalist></label>
+    <label class="f">Площадка<select id="oPlat">${PLATS.map(([k, n, f]) => `<option value="${k}" ${o.plat === k ? 'selected' : ''}>${n}${f ? ' · ' + f + '%' : ''}</option>`).join('')}</select></label>
+    <label class="f">Статус<select id="oCol">${COLS.map(([k, n]) => `<option value="${k}" ${o.col === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="f">Цена, ₽<input id="oPrice" inputmode="numeric" value="${o.price}"></label>
+    <label class="f">Комиссия, %<input id="oFee" inputmode="numeric" value="${o.fee ?? ''}" placeholder="${fee(o)}"></label>
+    <label class="f w2">Дедлайн<input type="date" id="oDl" value="${o.deadline}"></label>
+  </div>
+  <div class="net" id="oNet"></div>
+  <label class="ck" style="${o.col === 'done' ? '' : 'display:none'}" id="paidRow"><input type="checkbox" id="oPaid" ${o.paid ? 'checked' : ''}> Оплачено</label>
+  <div class="f">Этапы <div class="checks" id="oChecks">${(o.checks || []).map(c => `<div class="ck ${c.d ? 'done' : ''}"><input type="checkbox" ${c.d ? 'checked' : ''}><input type="text" value="${esc(c.t)}"></div>`).join('')}<div class="ck"><input type="checkbox" disabled><input type="text" placeholder="+ этап (Enter)" id="newCk"></div></div></div>
+  <label class="f">Заметки<textarea id="oNote" rows="3" placeholder="ТЗ, доступы, пожелания">${esc(o.note)}</textarea></label>
+  ${(o.logs || []).length ? `<div class="f">Время: ${hm(spent(o))}<div class="logs">${o.logs.slice().reverse().map(l => `<span>${fdate(l.date)} — ${hm(l.ms)}</span>`).join('')}</div></div>` : ''}
+  </div>
+  <div class="df">${isNew ? '' : '<button class="btn danger" id="oDel">Удалить</button>'}<span class="sp"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" id="oSave">Сохранить</button></div>`;
+  d.showModal(); if (isNew) setTimeout(() => $('#oTitle').focus(), 50);
+  const upd = () => { const p = +$('#oPrice').value || 0, f = $('#oFee').value === '' ? PLATS.find(x => x[0] === $('#oPlat').value)[2] : +$('#oFee').value; $('#oNet').innerHTML = p ? `<span>Получишь на руки: <b>${rub(p * (1 - f / 100))}</b></span><span>Комиссия: <b>${rub(p * f / 100)}</b></span>` : '<span>Впиши цену — посчитаю, сколько придёт после комиссии</span>'; $('#paidRow').style.display = $('#oCol').value === 'done' ? '' : 'none'; };
+  d.oninput = upd; d.onchange = e => { upd(); if (e.target.type === 'checkbox' && e.target.closest('#oChecks')) e.target.parentElement.classList.toggle('done', e.target.checked); }; upd();
+  d.onkeydown = e => { if (e.key === 'Enter' && e.target.id === 'newCk' && e.target.value.trim()) { e.preventDefault(); e.target.parentElement.insertAdjacentHTML('beforebegin', `<div class="ck"><input type="checkbox"><input type="text" value="${esc(e.target.value.trim())}"></div>`); e.target.value = ''; } };
+  d.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.matches('[data-close]')) d.close();
+    if (b.id === 'oSave') {
+      const title = $('#oTitle').value.trim(); if (!title) return toast('Напиши, что за заказ');
+      const col = $('#oCol').value;
+      const rec = Object.assign(o, { id: o.id || uid(), title, client: $('#oClient').value.trim(), plat: $('#oPlat').value, col, price: +$('#oPrice').value || 0, fee: $('#oFee').value === '' ? undefined : +$('#oFee').value, deadline: $('#oDl').value, note: $('#oNote').value.trim(), paid: col === 'done' && $('#oPaid').checked,
+        checks: $$('#oChecks .ck').map(r => ({ d: r.children[0].checked, t: r.children[1].value.trim() })).filter(c => c.t), created: o.created || today() });
+      if (col === 'done' && !rec.doneAt) rec.doneAt = today(); if (col !== 'done') delete rec.doneAt;
+      if (!S.orders.includes(rec)) S.orders.push(rec);
+      if (col === 'done' && S.timer?.id === rec.id) toggleTimer(null);
+      save(); d.close(); render(); toast(isNew ? 'Заказ добавлен' : 'Сохранено');
+    }
+    if (b.id === 'oDel' && confirm('Удалить заказ?')) { if (S.timer?.id === o.id) S.timer = null; S.orders = S.orders.filter(x => x !== o); save(); d.close(); render(); }
+  };
+}
+function tplForm(t) {
+  const isNew = !t; t = t || { name: '', text: '' };
+  const d = $('#dlg');
+  d.innerHTML = `<div class="dh"><b>${isNew ? 'Новый шаблон' : 'Шаблон'}</b><button class="x" data-close>✕</button></div>
+  <div class="db"><label class="f">Название<input id="tN" value="${esc(t.name)}"></label><label class="f">Текст · можно {клиент}, {срок}, {цена}, {портфолио}, {ссылка}, {дата}<textarea id="tT" rows="9">${esc(t.text)}</textarea></label></div>
+  <div class="df">${isNew ? '' : '<button class="btn danger" id="tDel">Удалить</button>'}<span class="sp"></span><button class="btn" id="tSave">Сохранить</button></div>`;
+  d.showModal();
+  d.onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.matches('[data-close]')) d.close();
+    if (b.id === 'tSave') { const n = $('#tN').value.trim(), x = $('#tT').value.trim(); if (!n || !x) return toast('Нужны название и текст'); if (isNew) S.tpl.push({ id: uid(), name: n, text: x }); else Object.assign(t, { name: n, text: x }); save(); d.close(); render(); }
+    if (b.id === 'tDel') { S.tpl = S.tpl.filter(x => x !== t); save(); d.close(); render(); } };
+}
+function move(id, col) {
+  const o = S.orders.find(x => x.id === id); if (!o || o.col === col) return;
+  o.col = col; if (col === 'done') { o.doneAt = today(); if (S.timer?.id === id) toggleTimer(null); toast('Сдано! Не забудь отметить оплату'); } else delete o.doneAt;
+  save(); render();
+}
+
+// ---------- рендер и события ----------
+function render() {
+  const v = V[S.view] ? S.view : 'board';
+  $$('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('#app').innerHTML = V[v](); renderTimer();
+  if (!S.orders.length && v === 'board') $('.board').insertAdjacentHTML('beforebegin', '<div class="card" style="margin-bottom:16px;font-size:17px">👋 Добавь заказ или отклик кнопкой <b>«+ Заказ»</b>. Перетаскивай карточки по колонкам, жми ▶ — засечёшь время и узнаешь реальную цену своего часа.</div>');
+}
+$('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) { S.view = b.dataset.v; save(); render(); } };
+$('#addBtn').onclick = () => orderForm();
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-timer]'); if (t) { e.stopPropagation(); return toggleTimer(t.dataset.timer); }
+  const mv = e.target.closest('[data-mv]'); if (mv) { e.stopPropagation(); const [id, c] = mv.dataset.mv.split('|'); return move(id, c); }
+  const c = e.target.closest('[data-copy]'); if (c) { const tp = S.tpl.find(x => x.id === c.dataset.copy), v = Object.assign({ дата: fdate(today()) }, S.vars); const txt = tp.text.replace(/\{([а-яё]+)\}/gi, (m, k) => v[k] || m); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Скопировано'), () => prompt('Скопируй:', txt)); return; }
+  const et = e.target.closest('[data-edtpl]'); if (et) return tplForm(S.tpl.find(x => x.id === et.dataset.edtpl));
+  const oc = e.target.closest('.oc'); if (oc && !e.target.closest('button')) orderForm(S.orders.find(x => x.id === oc.dataset.id));
+});
+$('#app').addEventListener('input', e => { if (e.target.dataset.var) { S.vars = { ...S.vars, [e.target.dataset.var]: e.target.value }; save(); const y = scrollY, f = e.target.dataset.var, pos = e.target.selectionStart; render(); const i = $(`[data-var="${f}"]`); i.focus(); i.setSelectionRange(pos, pos); scrollTo(0, y); } });
+// перетаскивание
+let dragId = null;
+document.addEventListener('dragstart', e => { const c = e.target.closest?.('.oc'); if (c) { dragId = c.dataset.id; c.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; } });
+document.addEventListener('dragend', e => { $$('.oc.drag').forEach(c => c.classList.remove('drag')); $$('.col.over').forEach(c => c.classList.remove('over')); });
+document.addEventListener('dragover', e => { const c = e.target.closest?.('.col'); if (c && dragId) { e.preventDefault(); $$('.col.over').forEach(x => x !== c && x.classList.remove('over')); c.classList.add('over'); } });
+document.addEventListener('drop', e => { const c = e.target.closest?.('.col'); if (c && dragId) { e.preventDefault(); move(dragId, c.dataset.col); dragId = null; } });
+$('#expBtn').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' })); a.download = 'zakazy-' + today() + '.json'; a.click(); };
+$('#impBtn').onclick = () => $('#impFile').click();
+$('#impFile').onchange = async e => { try { const s = JSON.parse(await e.target.files[0].text()); if (!Array.isArray(s.orders)) throw 0; S = s; save(); render(); toast('Загружено'); } catch (er) { toast('Это не файл «Заказов»'); } };
+render();
+</script>
+</body>
+</html>

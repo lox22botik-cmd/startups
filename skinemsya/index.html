@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#fff4ea">
+<title>Скинемся — кто кому сколько должен</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23ff6b4a'/%3E%3Ccircle cx='24' cy='32' r='12' fill='%23fff4ea'/%3E%3Ccircle cx='40' cy='32' r='12' fill='%23fff4ea' fill-opacity='.7'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #fff4ea; --card: #ffffff; --ink: #2b1d17; --ink2: #6b5a52; --muted: #a8968c; --line: #f1e1d4; --coral: #ff6b4a; --coral2: #ffe2d9; --mint: #1fae7a; --mint2: #d8f5ea; --sun: #ffb020; --violet: #7c5cff; }
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 17px/1.45 Onest, system-ui, sans-serif; min-height: 100vh; }
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; background: radial-gradient(600px 400px at 100% 0, #ffd9c9, transparent 70%), radial-gradient(500px 400px at 0 100%, #d6f3e6, transparent 70%); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 60px; }
+header { display: flex; align-items: center; gap: 16px; padding: 24px 0 20px; flex-wrap: wrap; }
+.logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.logo .m { width: 48px; height: 48px; border-radius: 16px; background: var(--coral); display: grid; place-items: center; box-shadow: 0 8px 20px -8px var(--coral); }
+.logo b { font-size: 26px; font-weight: 900; letter-spacing: -.02em; }
+.logo small { display: block; font-size: 14px; color: var(--ink2); font-weight: 500; }
+.hd { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { background: var(--card); border-radius: 16px; padding: 10px 16px; box-shadow: 0 6px 18px -12px rgba(120,60,30,.4); display: flex; flex-direction: column; min-width: 120px; }
+.pill b { font-size: 21px; font-weight: 800; }
+.pill span { font-size: 13px; color: var(--ink2); }
+.pill.plus b { color: var(--mint); } .pill.minus b { color: var(--coral); }
+
+.card { background: var(--card); border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px -18px rgba(120,60,30,.35); animation: in .4s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes in { from { opacity: 0; transform: translateY(12px) scale(.99); } }
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+.s4 { grid-column: span 4; } .s5 { grid-column: span 5; } .s6 { grid-column: span 6; } .s7 { grid-column: span 7; } .s8 { grid-column: span 8; } .s12 { grid-column: span 12; }
+.ct { font-weight: 800; font-size: 19px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.ct span { font-weight: 500; color: var(--muted); font-size: 14px; }
+.ct .r { margin-left: auto; }
+.btn { border: 0; background: var(--coral); color: #fff; padding: 13px 22px; border-radius: 14px; font-weight: 800; box-shadow: 0 8px 18px -10px var(--coral); transition: transform .12s; }
+.btn:active { transform: scale(.96); }
+.btn.mint { background: var(--mint); box-shadow: 0 8px 18px -10px var(--mint); }
+.btn.ghost { background: var(--bg); color: var(--ink); box-shadow: none; }
+.btn.sm { padding: 8px 14px; font-size: 15px; border-radius: 11px; }
+.x { border: 0; background: none; color: var(--muted); font-size: 18px; padding: 4px 8px; border-radius: 8px; }
+.x:hover { background: var(--bg); color: var(--coral); }
+
+/* список событий */
+.events { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.ev { text-align: left; border: 0; background: var(--card); border-radius: 22px; padding: 20px; box-shadow: 0 10px 30px -18px rgba(120,60,30,.35); transition: transform .2s; display: flex; flex-direction: column; gap: 10px; animation: in .4s both; }
+.ev:hover { transform: translateY(-4px); }
+.ev .em { font-size: 34px; }
+.ev b { font-size: 20px; }
+.ev .meta { color: var(--ink2); font-size: 15px; }
+.ev .sum { font-size: 26px; font-weight: 900; }
+.ev .st { font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 8px; align-self: flex-start; }
+.ev .st.ok { background: var(--mint2); color: var(--mint); } .ev .st.wait { background: var(--coral2); color: var(--coral); }
+.ev.new { border: 2px dashed var(--line); background: transparent; box-shadow: none; align-items: center; justify-content: center; color: var(--ink2); font-weight: 700; min-height: 180px; }
+.avs { display: flex; }
+.av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 14px; color: #fff; border: 3px solid var(--card); margin-left: -8px; flex: none; }
+.avs .av:first-child { margin-left: 0; }
+
+/* событие */
+.top { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+.top h1 { font-size: 30px; font-weight: 900; letter-spacing: -.02em; }
+.top .back { border: 0; background: var(--card); width: 44px; height: 44px; border-radius: 14px; font-size: 20px; box-shadow: 0 6px 16px -12px rgba(120,60,30,.4); }
+.top .acts { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.people { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.person { display: flex; align-items: center; gap: 8px; background: var(--bg); padding: 5px 12px 5px 5px; border-radius: 999px; font-weight: 600; }
+.person .av { margin: 0; width: 30px; height: 30px; border: 0; font-size: 13px; }
+.person.me { box-shadow: inset 0 0 0 2px var(--violet); }
+.person small { color: var(--violet); font-weight: 700; font-size: 12px; }
+.person button { border: 0; background: none; color: var(--muted); padding: 0 2px; }
+.addp { display: flex; gap: 6px; }
+.addp input { width: 150px; }
+input, select { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px; font-size: 16px; outline: none; transition: border-color .15s; width: 100%; }
+input:focus, select:focus { border-color: var(--coral); }
+
+.bal { display: flex; flex-direction: column; gap: 10px; }
+.brow { display: grid; grid-template-columns: 34px 1.4fr 1fr 100px; gap: 12px; align-items: center; }
+.brow .av { margin: 0; border: 0; }
+.brow .nm { font-weight: 700; }
+.brow .nm small { display: block; font-weight: 500; color: var(--muted); font-size: 13px; }
+.brow .tr { height: 14px; background: var(--bg); border-radius: 7px; position: relative; }
+.brow .tr i { position: absolute; top: 0; bottom: 0; border-radius: 7px; }
+.brow .tr::after { content: ''; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--line); }
+.brow b { text-align: right; font-size: 18px; }
+
+.transfers { display: flex; flex-direction: column; gap: 10px; }
+.tf { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--bg); transition: opacity .3s; }
+.tf .who { display: flex; align-items: center; gap: 8px; font-weight: 700; flex: 1; flex-wrap: wrap; }
+.tf .av { margin: 0; border: 0; width: 30px; height: 30px; font-size: 13px; }
+.tf .arr { color: var(--muted); }
+.tf .amt { font-size: 22px; font-weight: 900; color: var(--coral); white-space: nowrap; }
+.tf.done { opacity: .5; } .tf.done .amt { color: var(--mint); text-decoration: line-through; }
+.tf .chk { border: 2px solid var(--line); background: #fff; width: 34px; height: 34px; border-radius: 10px; font-weight: 900; color: transparent; flex: none; }
+.tf.done .chk { background: var(--mint); border-color: var(--mint); color: #fff; }
+.allok { text-align: center; padding: 26px; color: var(--mint); font-weight: 800; font-size: 20px; }
+
+.exp { display: flex; flex-direction: column; }
+.erow { display: grid; grid-template-columns: 44px 1fr auto auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.erow:last-child { border: 0; }
+.erow .ic { width: 44px; height: 44px; border-radius: 14px; background: var(--bg); display: grid; place-items: center; font-size: 22px; }
+.erow b { display: block; }
+.erow small { color: var(--ink2); font-size: 14px; }
+.erow .a { font-size: 19px; font-weight: 800; white-space: nowrap; }
+.cats { display: flex; flex-direction: column; gap: 10px; }
+.cat { display: grid; grid-template-columns: 28px 1fr 90px; gap: 10px; align-items: center; font-weight: 600; }
+.cat .tr { height: 10px; border-radius: 5px; background: var(--bg); overflow: hidden; }
+.cat .tr i { display: block; height: 100%; border-radius: 5px; }
+.cat b { text-align: right; }
+.empty { text-align: center; color: var(--ink2); padding: 30px 10px; }
+.empty .big { font-size: 46px; margin-bottom: 6px; }
+
+dialog { border: 0; border-radius: 26px; padding: 0; width: min(560px, calc(100vw - 24px)); background: var(--card); color: var(--ink); box-shadow: 0 30px 80px -20px rgba(60,30,10,.5); }
+dialog::backdrop { background: rgba(43,29,23,.4); backdrop-filter: blur(3px); }
+dialog[open] { animation: in .25s; }
+.dh { display: flex; justify-content: space-between; align-items: center; padding: 20px 22px 6px; }
+.dh b { font-size: 22px; font-weight: 900; }
+.db { padding: 12px 22px; display: flex; flex-direction: column; gap: 14px; }
+.df { display: flex; gap: 10px; padding: 8px 22px 22px; justify-content: flex-end; flex-wrap: wrap; }
+label.f { display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: 15px; color: var(--ink2); }
+.amt-in { font-size: 34px !important; font-weight: 900; text-align: center; padding: 14px !important; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 2px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 15px; transition: .15s; display: flex; align-items: center; gap: 6px; }
+.chip.on { border-color: var(--coral); background: var(--coral2); }
+.chip .av { width: 22px; height: 22px; font-size: 11px; margin: 0; border: 0; }
+.split-note { font-size: 14px; color: var(--ink2); }
+.emos { display: flex; gap: 6px; flex-wrap: wrap; }
+.emos button { border: 2px solid var(--line); background: #fff; border-radius: 12px; font-size: 22px; width: 46px; height: 46px; }
+.emos button.on { border-color: var(--coral); background: var(--coral2); }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 14px; opacity: 0; transition: .3s; pointer-events: none; font-weight: 600; z-index: 10; }
+.toast.on { opacity: 1; transform: translateX(-50%); }
+.banner { background: var(--violet); color: #fff; border-radius: 20px; padding: 18px 22px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; animation: in .4s; }
+.banner b { font-size: 18px; } .banner .btn { background: #fff; color: var(--violet); margin-left: auto; box-shadow: none; }
+footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 30px; }
+@media (max-width: 860px) { .s4, .s5, .s6, .s7, .s8 { grid-column: span 12; } .hd { margin-left: 0; width: 100%; } .pill { flex: 1; } }
+@media (max-width: 520px) { .wrap { padding: 0 14px 40px; } .brow { grid-template-columns: 34px 1fr 90px; } .brow .tr { display: none; } .top h1 { font-size: 24px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" id="home"><div class="m"><svg width="30" height="30" viewBox="0 0 30 30"><circle cx="11" cy="15" r="8" fill="#fff4ea"/><circle cx="19" cy="15" r="8" fill="#fff4ea" fill-opacity=".7"/></svg></div>
+      <div><b>Скинемся</b><small>поездки, вечеринки, общие покупки — без споров «кто кому»</small></div></div>
+    <div class="hd" id="hd"></div>
+  </header>
+  <main id="app"></main>
+  <footer>Без регистрации · данные хранятся в этом браузере · делись ссылкой — друзья увидят тот же расчёт</footer>
+</div>
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+const KEY = 'skinemsya-v1';
+const COLORS = ['#ff6b4a', '#1fae7a', '#7c5cff', '#ffb020', '#2f9bff', '#e8488a', '#14b8c4', '#8a6f5c', '#5f6cff', '#d94f2b'];
+const CATS = [['food', '🍕', 'Еда'], ['taxi', '🚕', 'Транспорт'], ['home', '🏠', 'Жильё'], ['fun', '🎟', 'Развлечения'], ['shop', '🛒', 'Магазин'], ['other', '💸', 'Другое']];
+const EV_EMO = ['🏕', '🎉', '✈️', '🍖', '🎂', '🏖', '🎳', '🛒', '🚗', '🎮'];
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const rub = v => Math.round(v).toLocaleString('ru-RU') + ' ₽';
+const plural = (n, a, b, c) => { const m = Math.abs(n) % 100, k = m % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
+const today = () => new Date().toISOString().slice(0, 10);
+const fdate = d => new Date(d + 'T12:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.events)) return s; } catch (e) { } return { events: [], open: null }; }
+let S = load();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не удалось сохранить'); } };
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2400); }
+const ev = () => S.events.find(e => e.id === S.open);
+const pName = (e, id) => e.people.find(p => p.id === id)?.name || '?';
+const pCol = (e, id) => COLORS[Math.max(0, e.people.findIndex(p => p.id === id)) % COLORS.length];
+const av = (e, id) => `<span class="av" style="background:${pCol(e, id)}">${esc(pName(e, id).slice(0, 1).toUpperCase())}</span>`;
+
+// ---------- расчёт ----------
+function balances(e) {
+  const b = Object.fromEntries(e.people.map(p => [p.id, { paid: 0, share: 0 }]));
+  for (const x of e.exps) {
+    const who = x.split.filter(id => b[id]); if (!who.length || !b[x.payer]) continue;
+    b[x.payer].paid += x.amount;
+    const part = x.amount / who.length; who.forEach(id => b[id].share += part);
+  }
+  for (const t of e.paid || []) { if (b[t.from]) b[t.from].paid += t.amount; if (b[t.to]) b[t.to].paid -= t.amount; } // отданные долги
+  return e.people.map(p => ({ id: p.id, ...b[p.id], net: b[p.id].paid - b[p.id].share }));
+}
+// Минимум переводов: самый большой должник платит самому большому кредитору
+function settle(e) {
+  const bal = balances(e).map(x => ({ id: x.id, v: Math.round(x.net * 100) / 100 }));
+  const deb = bal.filter(x => x.v < -0.5).sort((a, b) => a.v - b.v), cre = bal.filter(x => x.v > 0.5).sort((a, b) => b.v - a.v), out = [];
+  let i = 0, j = 0;
+  while (i < deb.length && j < cre.length) {
+    const a = Math.min(-deb[i].v, cre[j].v);
+    out.push({ from: deb[i].id, to: cre[j].id, amount: Math.round(a) });
+    deb[i].v += a; cre[j].v -= a;
+    if (deb[i].v > -0.5) i++; if (cre[j].v < 0.5) j++;
+  }
+  return out.filter(t => t.amount > 0);
+}
+const total = e => e.exps.reduce((s, x) => s + x.amount, 0);
+
+// ---------- шапка ----------
+function renderHd() {
+  let plus = 0, minus = 0, sum = 0;
+  for (const e of S.events) { sum += total(e); if (!e.me) continue; for (const t of settle(e)) { if (t.to === e.me) plus += t.amount; if (t.from === e.me) minus += t.amount; } }
+  $('#hd').innerHTML = `<div class="pill plus"><b>${rub(plus)}</b><span>тебе должны</span></div><div class="pill minus"><b>${rub(minus)}</b><span>ты должен</span></div><div class="pill"><b>${rub(sum)}</b><span>потрачено в ${S.events.length} ${plural(S.events.length, 'событии', 'событиях', 'событиях')}</span></div>`;
+}
+
+// ---------- экраны ----------
+function drawList() {
+  $('#app').innerHTML = `${S.incoming ? `<div class="banner"><span style="font-size:30px">📩</span><div><b>Тебе прислали расчёт «${esc(S.incoming.name)}»</b><div>${S.incoming.people.length} участников · ${rub(total(S.incoming))}</div></div><button class="btn" id="takeIn">Открыть у себя</button></div>` : ''}
+  <div class="events">
+    ${S.events.slice().reverse().map((e, k) => { const st = settle(e), left = st.length; return `<button class="ev" data-ev="${e.id}" style="animation-delay:${k * 40}ms">
+      <span class="em">${e.emo || '🎉'}</span><b>${esc(e.name)}</b>
+      <span class="meta">${fdate(e.date)} · ${e.exps.length} ${plural(e.exps.length, 'трата', 'траты', 'трат')}</span>
+      <span class="sum">${rub(total(e))}</span>
+      <span class="avs">${e.people.slice(0, 7).map(p => av(e, p.id)).join('')}</span>
+      ${e.exps.length ? `<span class="st ${left ? 'wait' : 'ok'}">${left ? `осталось ${left} ${plural(left, 'перевод', 'перевода', 'переводов')}` : 'все в расчёте ✓'}</span>` : ''}</button>`; }).join('')}
+    <button class="ev new" id="newEv"><span style="font-size:34px">＋</span>Новое событие</button>
+  </div>
+  ${S.events.length ? '' : `<div class="card empty" style="margin-top:18px"><div class="big">🧾</div><b style="font-size:20px;color:var(--ink)">Как это работает</b><p style="margin-top:8px">1. Создай событие и добавь друзей.<br>2. Записывай, кто за что заплатил.<br>3. Скинемся посчитает минимум переводов, чтобы все были в расчёте.<br>4. Отправь ссылку в чат — у всех будет одна и та же картина.</p></div>`}`;
+}
+function drawEvent() {
+  const e = ev(); if (!e) { S.open = null; return drawList(); }
+  const bal = balances(e), st = settle(e), mx = Math.max(1, ...bal.map(b => Math.abs(b.net)));
+  const byCat = CATS.map(([k, ic, n]) => ({ ic, n, v: e.exps.filter(x => (x.cat || 'other') === k).reduce((s, x) => s + x.amount, 0) })).filter(c => c.v).sort((a, b) => b.v - a.v);
+  const cmx = byCat[0]?.v || 1, sum = total(e);
+  $('#app').innerHTML = `<div class="top"><button class="back" id="back">←</button><span style="font-size:36px">${e.emo || '🎉'}</span><div><h1>${esc(e.name)}</h1><div style="color:var(--ink2)">${fdate(e.date)} · ${rub(sum)} · по ${rub(e.people.length ? sum / e.people.length : 0)} на человека</div></div>
+    <div class="acts"><button class="btn ghost sm" id="share">🔗 Ссылка для друзей</button><button class="btn ghost sm" id="copyTxt">📋 Текст в чат</button><button class="btn ghost sm" id="evEdit">✏️</button></div></div>
+  <div class="grid">
+    <div class="card s12"><div class="ct">Участники <span>нажми на имя, чтобы отметить себя</span></div>
+      <div class="people">${e.people.map(p => `<span class="person ${e.me === p.id ? 'me' : ''}" data-me="${p.id}">${av(e, p.id)}${esc(p.name)}${e.me === p.id ? '<small>это я</small>' : ''}<button data-delp="${p.id}" title="Убрать">✕</button></span>`).join('')}
+        <form class="addp" id="addP"><input id="pName" placeholder="Имя друга" maxlength="20" autocomplete="off"><button class="btn sm">+</button></form></div></div>
+    <div class="card s7"><div class="ct">Кто кому переводит <span>минимум переводов</span></div>
+      ${!e.exps.length ? '<div class="empty"><div class="big">💸</div>Добавь первую трату — здесь появится, кто кому сколько должен</div>'
+        : st.length ? `<div class="transfers">${st.map(t => `<div class="tf"><div class="who">${av(e, t.from)}${esc(pName(e, t.from))}<span class="arr">→</span>${av(e, t.to)}${esc(pName(e, t.to))}</div><span class="amt">${rub(t.amount)}</span><button class="chk" data-pay="${t.from}|${t.to}|${t.amount}" title="Отметить: перевёл">✓</button></div>`).join('')}</div>
+        <div class="split-note" style="margin-top:12px">Перевёл — нажми ✓, долг закроется у всех после новой ссылки.</div>` : '<div class="allok">🎉 Все в расчёте</div>'}
+      ${(e.paid || []).length ? `<div class="transfers" style="margin-top:10px">${e.paid.map((t, k) => `<div class="tf done"><div class="who">${av(e, t.from)}${esc(pName(e, t.from))}<span class="arr">→</span>${av(e, t.to)}${esc(pName(e, t.to))}</div><span class="amt">${rub(t.amount)}</span><button class="chk" data-unpay="${k}" title="Отменить">✓</button></div>`).join('')}</div>` : ''}
+    </div>
+    <div class="card s5"><div class="ct">Баланс <span>заплатил − его доля</span></div>
+      <div class="bal">${bal.map(b => `<div class="brow">${av(e, b.id)}<span class="nm">${esc(pName(e, b.id))}<small>заплатил ${rub(b.paid)}</small></span>
+        <div class="tr"><i style="${b.net >= 0 ? 'left:50%' : 'right:50%'};width:${Math.abs(b.net) / mx * 50}%;background:${b.net >= 0 ? 'var(--mint)' : 'var(--coral)'}"></i></div>
+        <b style="color:${b.net > 0.5 ? 'var(--mint)' : b.net < -0.5 ? 'var(--coral)' : 'var(--muted)'}">${b.net > 0.5 ? '+' : b.net < -0.5 ? '−' : ''}${rub(Math.abs(b.net))}</b></div>`).join('')}</div></div>
+    <div class="card s7"><div class="ct">Траты <span>${e.exps.length}</span><button class="btn sm r" id="addE">+ Трата</button></div>
+      ${e.exps.length ? `<div class="exp">${e.exps.slice().reverse().map(x => { const c = CATS.find(c => c[0] === (x.cat || 'other')); return `<div class="erow" data-ed="${x.id}" style="cursor:pointer"><span class="ic">${c[1]}</span><span><b>${esc(x.title || c[2])}</b><small>платил ${esc(pName(e, x.payer))} · ${x.split.length === e.people.length ? 'на всех' : 'на ' + x.split.map(id => esc(pName(e, id))).join(', ')}</small></span><span class="a">${rub(x.amount)}</span><button class="x" data-dele="${x.id}">✕</button></div>`; }).join('')}</div>`
+        : `<div class="empty">${e.people.length < 2 ? 'Сначала добавь хотя бы двоих участников' : 'Пока ни одной траты'}</div>`}</div>
+    <div class="card s5"><div class="ct">На что ушли деньги</div>${byCat.length ? `<div class="cats">${byCat.map(c => `<div class="cat"><span>${c.ic}</span><div><div style="font-size:14px;margin-bottom:4px">${c.n} · ${Math.round(c.v / sum * 100)}%</div><div class="tr"><i style="width:${c.v / cmx * 100}%;background:var(--coral)"></i></div></div><b>${rub(c.v)}</b></div>`).join('')}</div>` : '<div class="empty">Нет трат</div>'}</div>
+  </div>`;
+}
+function render() { S.open ? drawEvent() : drawList(); renderHd(); }
+
+// ---------- диалоги ----------
+function evForm(e) {
+  const isNew = !e; e = e || { name: '', emo: '🎉', date: today() };
+  const d = $('#dlg');
+  d.innerHTML = `<div class="dh"><b>${isNew ? 'Новое событие' : 'Событие'}</b><button class="x" data-close>✕</button></div>
+  <div class="db"><label class="f">Название<input id="eName" value="${esc(e.name)}" placeholder="Дача на выходных" maxlength="40"></label>
+    <div class="f">Значок<div class="emos">${EV_EMO.map(m => `<button data-emo="${m}" class="${e.emo === m ? 'on' : ''}">${m}</button>`).join('')}</div></div>
+    <label class="f">Дата<input type="date" id="eDate" value="${e.date}"></label>
+    ${isNew ? '<label class="f">Участники через запятую<input id="ePeople" placeholder="Я, Аня, Макс, Лёша"></label><div class="split-note">Первое имя — это ты (можно поменять потом).</div>' : ''}</div>
+  <div class="df">${isNew ? '' : '<button class="btn ghost" id="eDel" style="color:var(--coral);margin-right:auto">Удалить</button>'}<button class="btn" id="eSave">${isNew ? 'Создать' : 'Сохранить'}</button></div>`;
+  d.showModal(); setTimeout(() => $('#eName').focus(), 50);
+  let emo = e.emo;
+  d.onclick = x => {
+    const b = x.target.closest('button'); if (!b) return;
+    if (b.matches('[data-close]')) d.close();
+    if (b.dataset.emo) { emo = b.dataset.emo; $$('.emos button').forEach(y => y.classList.toggle('on', y === b)); }
+    if (b.id === 'eSave') {
+      const name = $('#eName').value.trim(); if (!name) return toast('Назови событие');
+      if (isNew) {
+        const ppl = [...new Set($('#ePeople').value.split(/[,\n]/).map(s => s.trim()).filter(Boolean))].slice(0, 20).map(n => ({ id: uid(), name: n }));
+        const ne = { id: uid(), name, emo, date: $('#eDate').value || today(), people: ppl, exps: [], paid: [], me: ppl[0]?.id || null };
+        S.events.push(ne); S.open = ne.id;
+      } else Object.assign(e, { name, emo, date: $('#eDate').value || e.date });
+      save(); d.close(); render();
+    }
+    if (b.id === 'eDel' && confirm('Удалить событие «' + e.name + '»?')) { S.events = S.events.filter(y => y.id !== e.id); S.open = null; save(); d.close(); render(); }
+  };
+}
+function expForm(x) {
+  const e = ev(); if (e.people.length < 2) return toast('Добавь хотя бы двоих участников');
+  const isNew = !x; x = x || { amount: '', title: '', cat: 'food', payer: e.me || e.people[0].id, split: e.people.map(p => p.id) };
+  const d = $('#dlg');
+  d.innerHTML = `<div class="dh"><b>${isNew ? 'Новая трата' : 'Трата'}</b><button class="x" data-close>✕</button></div>
+  <div class="db">
+    <input id="xAmt" class="amt-in" inputmode="decimal" placeholder="0 ₽" value="${x.amount}">
+    <div class="chips" id="xCat">${CATS.map(([k, ic, n]) => `<button class="chip ${x.cat === k ? 'on' : ''}" data-cat="${k}">${ic} ${n}</button>`).join('')}</div>
+    <label class="f">За что<input id="xTitle" value="${esc(x.title)}" placeholder="например: продукты в Пятёрочке" maxlength="50"></label>
+    <div class="f">Кто платил<div class="chips" id="xPayer">${e.people.map(p => `<button class="chip ${x.payer === p.id ? 'on' : ''}" data-payer="${p.id}">${av(e, p.id)}${esc(p.name)}</button>`).join('')}</div></div>
+    <div class="f">На кого делим <span class="split-note" id="xNote"></span><div class="chips" id="xSplit">${e.people.map(p => `<button class="chip ${x.split.includes(p.id) ? 'on' : ''}" data-sp="${p.id}">${av(e, p.id)}${esc(p.name)}</button>`).join('')}</div></div>
+  </div>
+  <div class="df"><button class="btn" id="xSave">${isNew ? 'Добавить' : 'Сохранить'}</button></div>`;
+  d.showModal(); setTimeout(() => $('#xAmt').focus(), 50);
+  const note = () => { const a = parseFloat($('#xAmt').value.replace(',', '.')), n = $$('#xSplit .on').length; $('#xNote').textContent = a > 0 && n ? `— по ${rub(a / n)} с каждого` : ''; };
+  d.oninput = note; note();
+  d.onclick = y => {
+    const b = y.target.closest('button'); if (!b) return;
+    if (b.matches('[data-close]')) d.close();
+    if (b.dataset.cat) $$('#xCat .chip').forEach(c => c.classList.toggle('on', c === b));
+    if (b.dataset.payer) $$('#xPayer .chip').forEach(c => c.classList.toggle('on', c === b));
+    if (b.dataset.sp) { b.classList.toggle('on'); note(); }
+    if (b.id === 'xSave') {
+      const amount = parseFloat($('#xAmt').value.replace(',', '.').replace(/\s/g, ''));
+      const split = $$('#xSplit .on').map(c => c.dataset.sp);
+      if (!(amount > 0)) return toast('Впиши сумму');
+      if (!split.length) return toast('Выбери, на кого делить');
+      const rec = { id: isNew ? uid() : x.id, amount, title: $('#xTitle').value.trim(), cat: $('#xCat .on')?.dataset.cat || 'other', payer: $('#xPayer .on').dataset.payer, split };
+      e.exps = e.exps.filter(z => z.id !== rec.id).concat(rec); save(); d.close(); render(); toast(isNew ? 'Трата добавлена' : 'Сохранено');
+    }
+  };
+}
+
+// ---------- ссылка: всё событие в адресе ----------
+const enc = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const dec = s => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/')))));
+function shareLink(e) {
+  const pack = { id: e.id, name: e.name, emo: e.emo, date: e.date, people: e.people, exps: e.exps, paid: e.paid || [] };
+  return location.href.split('#')[0] + '#e=' + enc(pack);
+}
+function readHash() {
+  const m = location.hash.match(/#e=([\w-]+)/); if (!m) return;
+  try { const e = dec(m[1]); if (e && Array.isArray(e.people) && Array.isArray(e.exps)) S.incoming = e; } catch (er) { toast('Ссылка повреждена'); }
+  history.replaceState(null, '', location.pathname + location.search);
+}
+function copy(t, msg) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast(msg), () => prompt('Скопируй:', t)); }
+
+// ---------- события ----------
+$('#home').onclick = () => { S.open = null; save(); render(); };
+$('#app').addEventListener('click', x => {
+  const b = x.target.closest('button, [data-me], [data-ed]'); if (!b) return;
+  const e = ev();
+  if (b.id === 'newEv') return evForm();
+  if (b.dataset.ev) { S.open = b.dataset.ev; save(); render(); window.scrollTo(0, 0); return; }
+  if (b.id === 'back') { S.open = null; save(); render(); return; }
+  if (b.id === 'takeIn') {
+    const inc = S.incoming, have = S.events.find(y => y.id === inc.id);
+    if (have) Object.assign(have, inc, { me: have.me }); else S.events.push({ ...inc, me: null });
+    S.open = inc.id; delete S.incoming; save(); render(); toast(have ? 'Расчёт обновлён' : 'Готово! Нажми на своё имя, чтобы отметить себя'); return;
+  }
+  if (!e) return;
+  if (b.dataset.delp) { x.stopPropagation(); if (e.exps.some(y => y.payer === b.dataset.delp || y.split.includes(b.dataset.delp))) return toast('У этого человека есть траты — сначала удали их'); e.people = e.people.filter(p => p.id !== b.dataset.delp); save(); render(); return; }
+  if (b.dataset.me) { e.me = e.me === b.dataset.me ? null : b.dataset.me; save(); render(); return; }
+  if (b.id === 'addE') return expForm();
+  if (b.dataset.dele) { x.stopPropagation(); e.exps = e.exps.filter(y => y.id !== b.dataset.dele); save(); render(); return; }
+  if (b.dataset.ed) return expForm(e.exps.find(y => y.id === b.dataset.ed));
+  if (b.dataset.pay) { const [from, to, amount] = b.dataset.pay.split('|'); (e.paid = e.paid || []).push({ from, to, amount: +amount }); save(); render(); toast('Перевод отмечен'); return; }
+  if (b.dataset.unpay != null) { e.paid.splice(+b.dataset.unpay, 1); save(); render(); return; }
+  if (b.id === 'share') return copy(shareLink(e), 'Ссылка скопирована — кинь в чат');
+  if (b.id === 'copyTxt') {
+    const st = settle(e);
+    const t = `${e.emo} ${e.name} — ${rub(total(e))}, по ${rub(total(e) / e.people.length)} на человека\n\n` + (st.length ? 'Кто кому переводит:\n' + st.map(t => `• ${pName(e, t.from)} → ${pName(e, t.to)}: ${rub(t.amount)}`).join('\n') : 'Все в расчёте 🎉') + `\n\nПодробно: ${shareLink(e)}`;
+    return copy(t, 'Текст скопирован — вставь в чат');
+  }
+  if (b.id === 'evEdit') return evForm(e);
+});
+$('#app').addEventListener('submit', x => {
+  if (x.target.id !== 'addP') return; x.preventDefault();
+  const e = ev(), n = $('#pName').value.trim(); if (!n) return;
+  if (e.people.some(p => p.name.toLowerCase() === n.toLowerCase())) return toast('Такое имя уже есть');
+  e.people.push({ id: uid(), name: n }); // старые траты не трогаем: новенький в них не участвовал
+  save(); render(); setTimeout(() => $('#pName')?.focus(), 30);
+});
+readHash(); render();
+addEventListener('hashchange', () => { if (/#e=/.test(location.hash)) { S.open = null; readHash(); render(); } });
+</script>
+</body>
+</html>

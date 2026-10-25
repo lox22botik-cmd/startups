@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a0e13">
+<title>TradeLog — дневник сделок</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0e13'/%3E%3Cpath d='M10 44l12-12 9 8 21-22' stroke='%232fd58b' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e13; --panel: #111821; --panel2: #16202b; --line: #213040; --text: #e8eef5; --muted: #8597ab;
+  --up: #2fd58b; --down: #ff5c6c; --gold: #ffb547; --blue: #5aa9ff;
+  --mono: 'JetBrains Mono', monospace; --r: 16px;
+}
+* { box-sizing: border-box; margin: 0; }
+html { color-scheme: dark; }
+body { background: var(--bg); color: var(--text); font: 16px/1.45 Manrope, system-ui, sans-serif; min-height: 100vh;
+  background-image: radial-gradient(900px 500px at 85% -10%, rgba(47,213,139,.08), transparent 60%), radial-gradient(700px 400px at -10% 30%, rgba(90,169,255,.06), transparent 60%); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 20px 60px; }
+.mono { font-family: var(--mono); }
+.up { color: var(--up); } .down { color: var(--down); } .muted { color: var(--muted); }
+
+/* шапка */
+header { display: flex; align-items: center; gap: 18px; padding: 22px 0 18px; flex-wrap: wrap; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo svg { width: 42px; height: 42px; }
+.logo b { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+.logo small { display: block; color: var(--muted); font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.hero-detail { margin-left: auto; display: flex; align-items: center; gap: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 8px 16px; }
+.hero-detail .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.hero-detail .val { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+.hero-detail svg { width: 120px; height: 36px; }
+nav { display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 5px; margin-bottom: 22px; overflow-x: auto; }
+nav button { border: 0; background: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; color: var(--muted); white-space: nowrap; transition: .2s; }
+nav button.on { background: var(--panel2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+nav .add { margin-left: auto; background: var(--up); color: #04150d; }
+
+/* сетка и карточки */
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; animation: rise .45s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+.s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s5 { grid-column: span 5; } .s6 { grid-column: span 6; } .s7 { grid-column: span 7; } .s8 { grid-column: span 8; } .s12 { grid-column: span 12; }
+.ct { font-size: 15px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: baseline; gap: 10px; }
+.ct span { font-weight: 500; color: var(--muted); font-size: 13px; }
+.kpi .v { font-family: var(--mono); font-size: 30px; font-weight: 700; letter-spacing: -.03em; }
+.kpi .l { color: var(--muted); font-size: 14px; }
+.kpi .h { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.verdict { font-size: 18px; line-height: 1.5; }
+.verdict b { color: var(--gold); }
+.empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+.empty h2 { color: var(--text); font-size: 24px; margin-bottom: 8px; }
+.empty .btns { display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+
+/* бары */
+.bars { display: flex; flex-direction: column; gap: 10px; }
+.bar { display: grid; grid-template-columns: 130px 1fr 110px; align-items: center; gap: 12px; font-size: 15px; }
+.bar .track { height: 12px; background: var(--panel2); border-radius: 6px; position: relative; overflow: hidden; }
+.bar .track i { position: absolute; top: 0; bottom: 0; border-radius: 6px; }
+.bar .n { font-family: var(--mono); text-align: right; font-weight: 700; }
+.bar .sub { font-size: 12px; color: var(--muted); display: block; font-family: Manrope; font-weight: 500; }
+.wk { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 150px; }
+.wk div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; font-size: 13px; color: var(--muted); }
+.wk i { width: 100%; max-width: 46px; border-radius: 8px 8px 3px 3px; min-height: 3px; }
+.wk b { font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+/* график капитала */
+.eq { width: 100%; height: 260px; display: block; }
+.eq text { fill: var(--muted); font: 12px var(--mono); }
+
+/* таблица */
+.tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+.tbl th { text-align: left; color: var(--muted); font-weight: 600; font-size: 13px; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl td { padding: 12px 10px; border-bottom: 1px solid rgba(33,48,64,.6); white-space: nowrap; }
+.tbl tr.row { cursor: pointer; transition: background .15s; }
+.tbl tr.row:hover { background: var(--panel2); }
+.tbl .num { font-family: var(--mono); text-align: right; }
+.side { font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 6px; }
+.side.long { background: rgba(47,213,139,.15); color: var(--up); } .side.short { background: rgba(255,92,108,.15); color: var(--down); }
+.tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--panel2); color: var(--muted); margin-right: 4px; }
+.tag.bad { background: rgba(255,92,108,.12); color: #ff97a1; }
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.scroll { overflow-x: auto; }
+
+/* формы */
+.btn { border: 0; border-radius: 12px; padding: 12px 20px; font-weight: 800; background: var(--up); color: #04150d; transition: transform .15s, filter .15s; }
+.btn:hover { filter: brightness(1.1); } .btn:active { transform: scale(.97); }
+.btn.ghost { background: var(--panel2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+.btn.danger { background: rgba(255,92,108,.15); color: var(--down); }
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); font-weight: 600; }
+input, select, textarea { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font-size: 16px; outline: none; transition: border-color .15s; width: 100%; }
+input:focus, select:focus, textarea:focus { border-color: var(--blue); }
+.fg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.fg .w2 { grid-column: span 2; } .fg .w4 { grid-column: span 4; }
+.seg { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.seg button { flex: 1; border: 0; background: none; padding: 9px; border-radius: 8px; font-weight: 800; color: var(--muted); }
+.seg button.on.l { background: rgba(47,213,139,.18); color: var(--up); }
+.seg button.on.s { background: rgba(255,92,108,.18); color: var(--down); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 7px 14px; font-size: 14px; font-weight: 600; color: var(--muted); transition: .15s; }
+.chip.on { border-color: var(--gold); color: var(--gold); background: rgba(255,181,71,.1); }
+.chip.on.badm { border-color: var(--down); color: #ff97a1; background: rgba(255,92,108,.1); }
+.preview { display: flex; gap: 22px; flex-wrap: wrap; background: var(--bg); border: 1px dashed var(--line); border-radius: 12px; padding: 14px 16px; font-size: 15px; }
+.preview b { font-family: var(--mono); font-size: 18px; }
+
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 20px; padding: 0; width: min(780px, calc(100vw - 24px)); max-height: calc(100vh - 30px); }
+dialog::backdrop { background: rgba(3,6,10,.7); backdrop-filter: blur(4px); }
+dialog[open] { animation: pop .25s cubic-bezier(.2,.8,.2,1); }
+@keyframes pop { from { opacity: 0; transform: scale(.96) translateY(10px); } }
+.dh { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.dh b { font-size: 20px; }
+.dh button { border: 0; background: var(--panel2); width: 36px; height: 36px; border-radius: 10px; font-size: 18px; }
+.db { padding: 20px 22px; display: flex; flex-direction: column; gap: 16px; }
+.df { display: flex; gap: 10px; padding: 0 22px 22px; flex-wrap: wrap; }
+.df .sp { flex: 1; }
+
+/* калькулятор */
+.calc-out { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.calc-out div { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.calc-out b { display: block; font-family: var(--mono); font-size: 24px; }
+.calc-out span { font-size: 13px; color: var(--muted); }
+.tp { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.tp div { display: flex; justify-content: space-between; padding: 10px 14px; background: var(--bg); border-radius: 10px; border: 1px solid var(--line); }
+.tp b { font-family: var(--mono); }
+
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--panel2); border: 1px solid var(--line); padding: 12px 20px; border-radius: 12px; opacity: 0; transition: .3s; pointer-events: none; font-weight: 600; z-index: 9; }
+.toast.on { opacity: 1; transform: translateX(-50%); }
+footer { color: var(--muted); font-size: 13px; text-align: center; margin-top: 30px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+footer button { background: none; border: 0; color: var(--muted); text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .s3, .s4 { grid-column: span 6; } .s5, .s6, .s7, .s8 { grid-column: span 12; }
+  .fg { grid-template-columns: repeat(2, 1fr); } .fg .w4 { grid-column: span 2; }
+  .hero-detail { margin-left: 0; width: 100%; }
+}
+@media (max-width: 560px) {
+  .wrap { padding: 0 14px 40px; }
+  .s3, .s4 { grid-column: span 12; }
+  .bar { grid-template-columns: 90px 1fr 90px; font-size: 14px; }
+  nav .add { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#111821" stroke="#213040"/><path d="M10 44l12-12 9 8 21-22" stroke="#2fd58b" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><b>TradeLog</b><small>дневник сделок, который показывает, где ты теряешь деньги</small></div>
+    </div>
+    <div class="hero-detail" id="heroDetail"></div>
+  </header>
+  <nav id="nav">
+    <button data-v="dash" class="on">Обзор</button>
+    <button data-v="trades">Сделки</button>
+    <button data-v="mist">Ошибки и эмоции</button>
+    <button data-v="calc">Калькулятор позиции</button>
+    <button class="add" id="addBtn">+ Сделка</button>
+  </nav>
+  <main id="app"></main>
+  <footer>
+    <span>Данные хранятся только в этом браузере</span>
+    <button id="expBtn">Скачать копию (JSON)</button>
+    <button id="csvBtn">Экспорт в CSV</button>
+    <button id="impBtn">Загрузить копию</button>
+    <input type="file" id="impFile" accept=".json" hidden>
+  </footer>
+</div>
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const KEY = 'tradelog-v1';
+const SETUPS = ['Пробой', 'Отскок от уровня', 'Ложный пробой', 'По тренду', 'Контртренд', 'Новости', 'Скальп'];
+const EMOS = [['calm', '😌 Спокоен'], ['sure', '💪 Уверен'], ['fomo', '😰 FOMO'], ['revenge', '😤 Отыграться'], ['fear', '😨 Страх'], ['bored', '🥱 От скуки']];
+const MISTAKES = ['Без стопа', 'Сдвинул стоп', 'Рано закрыл', 'Вход без сетапа', 'Завышен объём', 'Против тренда', 'Усреднял убыток', 'Не по плану'];
+const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const today = () => new Date().toISOString().slice(0, 10);
+const num = v => { const n = parseFloat(String(v).replace(',', '.').replace(/\s/g, '')); return isFinite(n) ? n : null; };
+const money = (v, sign = true) => v == null ? '—' : (sign && v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleString('ru-RU', { maximumFractionDigits: Math.abs(v) < 10 ? 2 : 0 }) + ' $';
+const fx = (v, d = 2) => v == null || !isFinite(v) ? '—' : v.toLocaleString('ru-RU', { maximumFractionDigits: d, minimumFractionDigits: 0 });
+const cls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+const fdate = d => new Date(d + 'T12:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+const plural = (n, a, b, c) => { const m = Math.abs(n) % 100, k = m % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
+
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.trades)) return s; } catch (e) { } return { trades: [], deposit: 1000, view: 'dash', calc: {} }; }
+let S = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не удалось сохранить: ' + e.message); } }
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2400); }
+
+// ---------- расчёт сделки ----------
+function calc(t) {
+  const dir = t.side === 'short' ? -1 : 1, closed = t.exit != null && t.exit !== '';
+  const pnl = closed ? (t.exit - t.entry) * t.qty * dir - (t.fee || 0) : null;
+  const risk = t.stop ? Math.abs(t.entry - t.stop) * t.qty : null;
+  return { closed, pnl, risk, R: closed && risk ? pnl / risk : null, pct: closed ? (t.exit / t.entry - 1) * 100 * dir : null };
+}
+const closedTrades = () => S.trades.filter(t => calc(t).closed).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+
+function stats(list) {
+  const c = list.map(t => ({ t, ...calc(t) }));
+  const wins = c.filter(x => x.pnl > 0), loss = c.filter(x => x.pnl < 0);
+  const total = c.reduce((s, x) => s + x.pnl, 0);
+  const gw = wins.reduce((s, x) => s + x.pnl, 0), gl = -loss.reduce((s, x) => s + x.pnl, 0);
+  const Rs = c.filter(x => x.R != null).map(x => x.R);
+  let eq = 0, peak = 0, dd = 0; const curve = [];
+  for (const x of c) { eq += x.pnl; peak = Math.max(peak, eq); dd = Math.min(dd, eq - peak); curve.push({ d: x.t.date, v: eq }); }
+  let cur = 0, maxL = 0, maxW = 0, cw = 0;
+  for (const x of c) { if (x.pnl < 0) { cur++; cw = 0; maxL = Math.max(maxL, cur); } else if (x.pnl > 0) { cw++; cur = 0; maxW = Math.max(maxW, cw); } }
+  return {
+    n: c.length, total, wr: c.length ? wins.length / c.length * 100 : null,
+    avgW: wins.length ? gw / wins.length : null, avgL: loss.length ? -gl / loss.length : null,
+    pf: gl ? gw / gl : wins.length ? Infinity : null, exp: c.length ? total / c.length : null,
+    avgR: Rs.length ? Rs.reduce((a, b) => a + b, 0) / Rs.length : null, dd, curve, maxL, maxW,
+    best: c.reduce((b, x) => !b || x.pnl > b.pnl ? x : b, null), worst: c.reduce((b, x) => !b || x.pnl < b.pnl ? x : b, null),
+  };
+}
+function groupBy(list, keyFn) {
+  const m = new Map();
+  for (const t of list) for (const k of [].concat(keyFn(t)).filter(Boolean)) { if (!m.has(k)) m.set(k, []); m.get(k).push(t); }
+  return [...m].map(([k, ts]) => ({ k, ...stats(ts) })).sort((a, b) => b.total - a.total);
+}
+
+// ---------- мини-графики ----------
+function spark(curve, w = 120, h = 36) {
+  if (curve.length < 2) return '';
+  const vs = [0, ...curve.map(p => p.v)], mn = Math.min(...vs), mx = Math.max(...vs), r = mx - mn || 1;
+  const pts = vs.map((v, i) => `${(i / (vs.length - 1) * w).toFixed(1)},${(h - 3 - (v - mn) / r * (h - 6)).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${vs[vs.length - 1] >= 0 ? 'var(--up)' : 'var(--down)'}" stroke-width="2" stroke-linejoin="round"/></svg>`;
+}
+function equity(curve) {
+  const W = 800, H = 260, P = { l: 64, r: 14, t: 16, b: 28 };
+  const vs = [0, ...curve.map(p => p.v)], ds = ['', ...curve.map(p => p.d)];
+  const mn = Math.min(0, ...vs), mx = Math.max(0, ...vs), r = mx - mn || 1;
+  const X = i => P.l + i / Math.max(1, vs.length - 1) * (W - P.l - P.r), Y = v => P.t + (mx - v) / r * (H - P.t - P.b);
+  const line = vs.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const last = vs[vs.length - 1], col = last >= 0 ? '#2fd58b' : '#ff5c6c';
+  const ticks = [mx, (mx + mn) / 2, mn].map(v => `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="#213040" stroke-dasharray="3 5"/><text x="${P.l - 8}" y="${Y(v) + 4}" text-anchor="end">${fx(v, 0)}</text>`).join('');
+  const lbl = [1, Math.floor(vs.length / 2), vs.length - 1].filter((v, i, a) => v > 0 && a.indexOf(v) === i).map(i => `<text x="${X(i)}" y="${H - 6}" text-anchor="middle">${fdate(ds[i])}</text>`).join('');
+  return `<svg class="eq" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".35"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    ${ticks}<line x1="${P.l}" x2="${W - P.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3a4f66"/>
+    <polygon points="${X(0)},${Y(0)} ${line} ${X(vs.length - 1)},${Y(0)}" fill="url(#g)"/>
+    <polyline points="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+    <circle cx="${X(vs.length - 1)}" cy="${Y(last)}" r="5" fill="${col}"/>${lbl}</svg>`;
+}
+function barsHtml(groups, labelFn = k => k) {
+  if (!groups.length) return '<div class="muted">Пока нет данных</div>';
+  const mx = Math.max(...groups.map(g => Math.abs(g.total))) || 1;
+  return `<div class="bars">${groups.map(g => {
+    const w = Math.abs(g.total) / mx * 50;
+    return `<div class="bar"><span>${esc(labelFn(g.k))}<span class="sub">${g.n} ${plural(g.n, 'сделка', 'сделки', 'сделок')} · ${fx(g.wr, 0)}% в плюс</span></span>
+      <div class="track"><i style="left:${g.total >= 0 ? 50 : 50 - w}%;width:${w}%;background:${g.total >= 0 ? 'var(--up)' : 'var(--down)'}"></i><i style="left:50%;width:1px;background:#3a4f66"></i></div>
+      <span class="n ${cls(g.total)}">${money(g.total)}</span></div>`;
+  }).join('')}</div>`;
+}
+
+// ---------- шапка: деталь с цифрами ----------
+function renderHero() {
+  const st = stats(closedTrades()), td = closedTrades().filter(t => t.date === today()).reduce((s, t) => s + calc(t).pnl, 0);
+  const open = S.trades.filter(t => !calc(t).closed).length;
+  $('#heroDetail').innerHTML = st.n ? `
+    <div><div class="lbl">Итог</div><div class="val ${cls(st.total)}">${money(st.total)}</div></div>
+    ${spark(st.curve)}
+    <div><div class="lbl">Сегодня</div><div class="val ${cls(td)}" style="font-size:16px">${money(td)}</div></div>
+    ${open ? `<div><div class="lbl">Открыто</div><div class="val" style="font-size:16px">${open}</div></div>` : ''}`
+    : `<div><div class="lbl">Сделок в дневнике</div><div class="val">0</div></div><div class="muted" style="font-size:14px">запиши первую — здесь появится кривая</div>`;
+}
+
+// ---------- вкладки ----------
+const V = {};
+V.dash = () => {
+  const list = closedTrades(), st = stats(list);
+  if (!st.n) return `<div class="card empty"><h2>Дневник пуст</h2><p>Записывай каждую сделку: вход, выход, стоп и что чувствовал.<br>Через 20–30 сделок станет видно, какой сетап кормит, а какая ошибка сливает депозит.</p>
+    <div class="btns"><button class="btn" data-act="add">+ Записать сделку</button><button class="btn ghost" data-act="demo">Посмотреть на примере</button></div></div>`;
+  const bySetup = groupBy(list, t => t.setup || 'Без сетапа');
+  const mist = groupBy(list, t => t.mist && t.mist.length ? t.mist : null);
+  const worstM = mist.filter(g => g.total < 0).sort((a, b) => a.total - b.total)[0];
+  const bestS = bySetup.filter(g => g.n >= 2 && g.total > 0)[0];
+  const lines = [];
+  lines.push(`За ${st.n} ${plural(st.n, 'сделку', 'сделки', 'сделок')} ты ${st.total >= 0 ? 'заработал' : 'потерял'} <b>${money(Math.abs(st.total), false)}</b>.`);
+  if (st.exp != null) lines.push(`В среднем каждая сделка приносит <b>${money(st.exp)}</b> — ${st.exp > 0 ? 'система в плюс, главное не ломать её' : 'пока система в минус, сокращай объём до исправления ошибок'}.`);
+  if (bestS) lines.push(`Лучше всего работает «${esc(bestS.k)}»: <b>${money(bestS.total)}</b>.`);
+  if (worstM) lines.push(`Ошибка «${esc(worstM.k)}» стоила <b>${money(worstM.total)}</b> — уберёшь её, и итог станет ${money(st.total - worstM.total)}.`);
+  const wd = WD.map((n, i) => ({ n, v: list.filter(t => (new Date(t.date + 'T12:00').getDay() + 6) % 7 === i).reduce((s, t) => s + calc(t).pnl, 0) }));
+  const wmx = Math.max(...wd.map(x => Math.abs(x.v))) || 1;
+  return `<div class="grid">
+    <div class="card s3 kpi"><div class="l">Итог</div><div class="v ${cls(st.total)}">${money(st.total)}</div><div class="h">${S.deposit ? fx(st.total / S.deposit * 100, 1) + '% к депозиту ' + fx(S.deposit, 0) + ' $' : ''}</div></div>
+    <div class="card s3 kpi"><div class="l">Сделок в плюс</div><div class="v">${fx(st.wr, 0)}%</div><div class="h">${list.filter(t => calc(t).pnl > 0).length} из ${st.n}</div></div>
+    <div class="card s3 kpi"><div class="l">Профит-фактор</div><div class="v ${st.pf >= 1 ? 'up' : 'down'}">${st.pf === Infinity ? '∞' : fx(st.pf)}</div><div class="h">прибыль ÷ убытки · норма от 1,5</div></div>
+    <div class="card s3 kpi"><div class="l">Средний R</div><div class="v ${cls(st.avgR)}">${st.avgR == null ? '—' : (st.avgR > 0 ? '+' : '') + fx(st.avgR) + 'R'}</div><div class="h">результат в рисках на сделку</div></div>
+    <div class="card s8"><div class="ct">Кривая капитала <span>после каждой закрытой сделки</span></div>${equity(st.curve)}</div>
+    <div class="card s4"><div class="ct">Вывод</div><div class="verdict">${lines.join(' ')}</div></div>
+    <div class="card s6"><div class="ct">Сетапы <span>что кормит, а что сливает</span></div>${barsHtml(bySetup)}</div>
+    <div class="card s6"><div class="ct">По дням недели</div><div class="wk">${wd.map(x => `<div><b class="${cls(x.v)}">${x.v ? fx(x.v, 0) : ''}</b><i style="height:${Math.abs(x.v) / wmx * 100}%;background:${x.v >= 0 ? 'var(--up)' : 'var(--down)'};opacity:${x.v ? 1 : .2}"></i>${x.n}</div>`).join('')}</div></div>
+    <div class="card s4 kpi"><div class="l">Средняя прибыль / убыток</div><div class="v" style="font-size:22px"><span class="up">${money(st.avgW)}</span> <span class="muted">/</span> <span class="down">${money(st.avgL)}</span></div><div class="h">${st.avgW && st.avgL ? 'прибыль больше убытка в ' + fx(st.avgW / -st.avgL, 1) + ' раза' : ''}</div></div>
+    <div class="card s4 kpi"><div class="l">Макс. просадка</div><div class="v down">${money(st.dd)}</div><div class="h">серия убытков подряд: ${st.maxL}, прибылей: ${st.maxW}</div></div>
+    <div class="card s4 kpi"><div class="l">Лучшая / худшая</div><div class="v" style="font-size:22px"><span class="up">${money(st.best.pnl)}</span> <span class="muted">/</span> <span class="down">${money(st.worst.pnl)}</span></div><div class="h">${esc(st.best.t.sym)} · ${esc(st.worst.t.sym)}</div></div>
+  </div>`;
+};
+
+V.trades = () => {
+  const f = S.filter || {};
+  const syms = [...new Set(S.trades.map(t => t.sym))].sort();
+  let list = S.trades.slice().sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  if (f.sym) list = list.filter(t => t.sym === f.sym);
+  if (f.res === 'win') list = list.filter(t => calc(t).pnl > 0); if (f.res === 'loss') list = list.filter(t => calc(t).pnl < 0); if (f.res === 'open') list = list.filter(t => !calc(t).closed);
+  if (!S.trades.length) return V.dash();
+  const st = stats(list.filter(t => calc(t).closed));
+  return `<div class="card">
+    <div class="filters">
+      <select id="fSym" style="width:auto"><option value="">Все инструменты</option>${syms.map(s => `<option ${f.sym === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
+      <div class="chips">${[['', 'Все'], ['win', 'В плюс'], ['loss', 'В минус'], ['open', 'Открытые']].map(([k, n]) => `<button class="chip ${(f.res || '') === k ? 'on' : ''}" data-res="${k}">${n}</button>`).join('')}</div>
+      <span class="muted" style="margin-left:auto;align-self:center">${list.length} ${plural(list.length, 'сделка', 'сделки', 'сделок')} · итог <b class="mono ${cls(st.total)}">${money(st.total)}</b></span>
+    </div>
+    <div class="scroll"><table class="tbl"><thead><tr><th>Дата</th><th>Инструмент</th><th></th><th class="num">Вход</th><th class="num">Выход</th><th class="num">Результат</th><th class="num">R</th><th>Сетап · эмоция · ошибки</th></tr></thead><tbody>
+    ${list.map(t => { const c = calc(t); return `<tr class="row" data-id="${t.id}"><td>${fdate(t.date)}</td><td><b>${esc(t.sym)}</b></td><td><span class="side ${t.side}">${t.side === 'short' ? 'SHORT' : 'LONG'}</span></td>
+      <td class="num">${fx(t.entry, 6)}</td><td class="num">${c.closed ? fx(t.exit, 6) : '<span class="muted">открыта</span>'}</td>
+      <td class="num ${cls(c.pnl)}"><b>${c.closed ? money(c.pnl) : '—'}</b><br><small class="muted">${c.pct != null ? (c.pct > 0 ? '+' : '') + fx(c.pct) + '%' : ''}</small></td>
+      <td class="num ${cls(c.R)}">${c.R != null ? (c.R > 0 ? '+' : '') + fx(c.R, 1) : '—'}</td>
+      <td>${t.setup ? `<span class="tag">${esc(t.setup)}</span>` : ''}${t.emo ? `<span class="tag">${EMOS.find(e => e[0] === t.emo)?.[1] || ''}</span>` : ''}${(t.mist || []).map(m => `<span class="tag bad">${esc(m)}</span>`).join('')}</td></tr>`; }).join('')}
+    </tbody></table></div></div>`;
+};
+
+V.mist = () => {
+  const list = closedTrades();
+  if (!list.length) return V.dash();
+  const mist = groupBy(list, t => t.mist && t.mist.length ? t.mist : null);
+  const clean = list.filter(t => !(t.mist && t.mist.length)), dirty = list.filter(t => t.mist && t.mist.length);
+  const sc = stats(clean), sd = stats(dirty);
+  const emo = groupBy(list, t => t.emo || null);
+  const lost = mist.filter(g => g.total < 0).reduce((s, g) => s + g.total, 0);
+  return `<div class="grid">
+    <div class="card s4 kpi"><div class="l">Сделки без ошибок</div><div class="v ${cls(sc.total)}">${money(sc.total)}</div><div class="h">${sc.n} ${plural(sc.n, 'сделка', 'сделки', 'сделок')} · ${fx(sc.wr, 0)}% в плюс</div></div>
+    <div class="card s4 kpi"><div class="l">Сделки с ошибками</div><div class="v ${cls(sd.total)}">${money(sd.total)}</div><div class="h">${sd.n} ${plural(sd.n, 'сделка', 'сделки', 'сделок')} · ${fx(sd.wr, 0)}% в плюс</div></div>
+    <div class="card s4 kpi"><div class="l">Цена ошибок</div><div class="v down">${money(lost)}</div><div class="h">столько унесли сделки с отмеченными ошибками</div></div>
+    <div class="card s6"><div class="ct">Ошибки <span>сколько стоила каждая</span></div>${barsHtml(mist)}</div>
+    <div class="card s6"><div class="ct">Эмоции <span>с каким настроем ты торгуешь лучше</span></div>${barsHtml(emo, k => EMOS.find(e => e[0] === k)?.[1] || k)}</div>
+    <div class="card s12 verdict">${sd.n && sc.n ? `Без ошибок ты зарабатываешь в среднем <b>${money(sc.exp)}</b> на сделку, с ошибками — <b>${money(sd.exp)}</b>. ${sc.exp > sd.exp ? 'Дисциплина буквально стоит денег: перед входом проверь список ошибок.' : 'Странно, но ошибки пока не вредят — скорее всего, просто мало сделок.'}` : 'Отмечай ошибки в каждой сделке — здесь появится, сколько стоит каждая.'}</div>
+  </div>`;
+};
+
+V.calc = () => {
+  const c = Object.assign({ dep: S.deposit || 1000, risk: 1, entry: '', stop: '', lev: 10, side: 'long' }, S.calc);
+  return `<div class="grid">
+    <div class="card s6"><div class="ct">Сколько входить <span>от риска, а не от жадности</span></div>
+      <div class="fg">
+        <label class="f w2">Депозит, $<input id="cDep" inputmode="decimal" value="${c.dep}"></label>
+        <label class="f w2">Риск на сделку, %<input id="cRisk" inputmode="decimal" value="${c.risk}"></label>
+        <div class="f w4"><div class="seg" id="cSide"><button class="${c.side === 'long' ? 'on l' : ''}" data-s="long">LONG</button><button class="${c.side === 'short' ? 'on s' : ''}" data-s="short">SHORT</button></div></div>
+        <label class="f w2">Цена входа<input id="cEntry" inputmode="decimal" value="${c.entry}" placeholder="например 80000"></label>
+        <label class="f w2">Стоп-лосс<input id="cStop" inputmode="decimal" value="${c.stop}" placeholder="например 78800"></label>
+        <label class="f w4">Плечо: <b id="cLevV">×${c.lev}</b><input type="range" id="cLev" min="1" max="50" value="${c.lev}" style="padding:0"></label>
+      </div></div>
+    <div class="card s6" id="calcOut"></div>
+  </div>`;
+};
+function calcUpdate() {
+  const c = S.calc = { dep: num($('#cDep').value), risk: num($('#cRisk').value), entry: num($('#cEntry').value), stop: num($('#cStop').value), lev: +$('#cLev').value, side: $('#cSide .on')?.dataset.s || 'long' };
+  $('#cLevV').textContent = '×' + c.lev; save();
+  const out = $('#calcOut');
+  if (!c.dep || !c.risk || !c.entry || !c.stop) { out.innerHTML = '<div class="ct">Результат</div><div class="muted">Впиши депозит, риск, вход и стоп — посчитаю объём, маржу и цели.</div>'; return; }
+  const wrong = c.side === 'long' ? c.stop >= c.entry : c.stop <= c.entry;
+  if (wrong) { out.innerHTML = `<div class="ct">Результат</div><div class="down">Для ${c.side === 'long' ? 'лонга стоп должен быть ниже' : 'шорта стоп должен быть выше'} входа.</div>`; return; }
+  const riskUsd = c.dep * c.risk / 100, dist = Math.abs(c.entry - c.stop), qty = riskUsd / dist, pos = qty * c.entry, margin = pos / c.lev;
+  const dir = c.side === 'long' ? 1 : -1, liq = c.entry * (1 - dir / c.lev);
+  const liqBad = c.side === 'long' ? liq >= c.stop : liq <= c.stop;
+  out.innerHTML = `<div class="ct">Результат</div>
+    <div class="calc-out">
+      <div><b>${fx(qty, qty < 1 ? 5 : 2)}</b><span>количество (монет / акций)</span></div>
+      <div><b>${fx(pos, 0)} $</b><span>размер позиции</span></div>
+      <div><b class="down">−${fx(riskUsd, 2)} $</b><span>потеря, если выбьет стоп (${fx(dist / c.entry * 100)}% до стопа)</span></div>
+      <div><b class="${margin > c.dep ? 'down' : ''}">${fx(margin, 0)} $</b><span>нужно маржи при ×${c.lev}${margin > c.dep ? ' — больше депозита!' : ''}</span></div>
+    </div>
+    <div class="tp">${[1.5, 2, 3].map(r => `<div><span>Цель ${fx(r, 1)}R — прибыль <b class="up">+${fx(riskUsd * r, 2)} $</b></span><b>${fx(c.entry + dir * dist * r, 6)}</b></div>`).join('')}</div>
+    <p class="muted" style="margin-top:12px;font-size:14px">Примерная ликвидация при ×${c.lev}: <b class="mono ${liqBad ? 'down' : ''}">${fx(liq, 6)}</b>${liqBad ? ' — <span class="down">раньше стопа! Уменьши плечо.</span>' : ' — дальше стопа, ок.'}</p>`;
+}
+
+// ---------- форма сделки ----------
+function tradeForm(t) {
+  const isNew = !t; t = t || { date: today(), side: 'long', sym: S.lastSym || '', entry: '', exit: '', stop: '', qty: '', fee: '', setup: '', emo: '', mist: [], note: '' };
+  const d = $('#dlg');
+  d.innerHTML = `<div class="dh"><b>${isNew ? 'Новая сделка' : 'Сделка ' + esc(t.sym)}</b><button data-close>✕</button></div>
+  <div class="db">
+    <div class="fg">
+      <label class="f">Дата<input type="date" id="tDate" value="${t.date}"></label>
+      <label class="f">Инструмент<input id="tSym" value="${esc(t.sym)}" placeholder="BTCUSDT" list="symList" autocomplete="off"></label>
+      <datalist id="symList">${[...new Set(S.trades.map(x => x.sym))].map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+      <div class="f w2">Направление<div class="seg" id="tSide"><button class="${t.side !== 'short' ? 'on l' : ''}" data-s="long">LONG ↑</button><button class="${t.side === 'short' ? 'on s' : ''}" data-s="short">SHORT ↓</button></div></div>
+      <label class="f">Вход<input id="tEntry" inputmode="decimal" value="${t.entry}"></label>
+      <label class="f">Выход <small>(пусто — открыта)</small><input id="tExit" inputmode="decimal" value="${t.exit ?? ''}"></label>
+      <label class="f">Стоп<input id="tStop" inputmode="decimal" value="${t.stop ?? ''}"></label>
+      <label class="f">Кол-во<input id="tQty" inputmode="decimal" value="${t.qty}" placeholder="монет / акций"></label>
+      <label class="f">Комиссия, $<input id="tFee" inputmode="decimal" value="${t.fee ?? ''}" placeholder="0"></label>
+      <label class="f w2">Сетап<select id="tSetup"><option value="">— не выбран —</option>${SETUPS.map(s => `<option ${t.setup === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
+    </div>
+    <div class="preview" id="tPrev"></div>
+    <div class="f">Что чувствовал при входе<div class="chips" id="tEmo">${EMOS.map(([k, n]) => `<button class="chip ${t.emo === k ? 'on' : ''}" data-e="${k}">${n}</button>`).join('')}</div></div>
+    <div class="f">Ошибки <small>(честно — это самое полезное)</small><div class="chips" id="tMist">${MISTAKES.map(m => `<button class="chip ${(t.mist || []).includes(m) ? 'on badm' : ''}" data-m="${m}">${m}</button>`).join('')}</div></div>
+    <label class="f">Заметка<textarea id="tNote" rows="2" placeholder="почему вошёл, что пошло не так">${esc(t.note)}</textarea></label>
+  </div>
+  <div class="df">${isNew ? '' : '<button class="btn danger" id="tDel">Удалить</button>'}<span class="sp"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" id="tSave">Сохранить</button></div>`;
+  d.showModal();
+  const read = () => ({ date: $('#tDate').value || today(), sym: $('#tSym').value.trim().toUpperCase(), side: $('#tSide .on').dataset.s, entry: num($('#tEntry').value), exit: num($('#tExit').value), stop: num($('#tStop').value), qty: num($('#tQty').value), fee: num($('#tFee').value) || 0, setup: $('#tSetup').value, emo: $('#tEmo .on')?.dataset.e || '', mist: $$('#tMist .on').map(b => b.dataset.m), note: $('#tNote').value.trim() });
+  const prev = () => {
+    const x = read();
+    if (!x.entry || !x.qty) { $('#tPrev').innerHTML = '<span class="muted">Впиши вход и количество — посчитаю результат и R</span>'; return; }
+    const c = calc(x);
+    $('#tPrev').innerHTML = `<span>Позиция <b>${fx(x.entry * x.qty, 0)} $</b></span>${c.risk ? `<span>Риск <b class="down">${fx(c.risk, 2)} $</b></span>` : '<span class="down">Без стопа риск не посчитать</span>'}${c.closed ? `<span>Результат <b class="${cls(c.pnl)}">${money(c.pnl)}</b></span>${c.R != null ? `<span>R <b class="${cls(c.R)}">${(c.R > 0 ? '+' : '') + fx(c.R, 2)}</b></span>` : ''}` : '<span class="muted">сделка открыта</span>'}`;
+  };
+  d.oninput = prev; prev();
+  d.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.matches('[data-close]')) return d.close();
+    if (b.closest('#tSide')) { $$('#tSide button').forEach(x => x.className = ''); b.className = 'on ' + (b.dataset.s === 'long' ? 'l' : 's'); prev(); }
+    if (b.dataset.e) { const on = b.classList.contains('on'); $$('#tEmo .chip').forEach(x => x.classList.remove('on')); if (!on) b.classList.add('on'); }
+    if (b.dataset.m) { b.classList.toggle('on'); b.classList.toggle('badm'); }
+    if (b.id === 'tSave') {
+      const x = read();
+      if (!x.sym || !x.entry || !x.qty) return toast('Нужны инструмент, вход и количество');
+      if (x.stop && (x.side === 'long' ? x.stop >= x.entry : x.stop <= x.entry)) return toast(x.side === 'long' ? 'У лонга стоп ниже входа' : 'У шорта стоп выше входа');
+      x.id = isNew ? uid() : t.id; S.lastSym = x.sym;
+      S.trades = S.trades.filter(y => y.id !== x.id).concat(x); save(); d.close(); render();
+      toast(calc(x).closed ? `Записано: ${money(calc(x).pnl)}` : 'Открытая сделка записана');
+    }
+    if (b.id === 'tDel' && confirm('Удалить сделку?')) { S.trades = S.trades.filter(y => y.id !== t.id); save(); d.close(); render(); }
+  };
+}
+
+// ---------- пример ----------
+function demo() {
+  const syms = [['BTCUSDT', 80000, .02], ['ETHUSDT', 2300, .5], ['SOLUSDT', 100, 8], ['SBER', 290, 30]];
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  const out = [], d0 = new Date(); d0.setDate(d0.getDate() - 45);
+  for (let i = 0; i < 38; i++) {
+    const [sym, px, q] = syms[Math.floor(rnd() * syms.length)], side = rnd() > .4 ? 'long' : 'short', dir = side === 'long' ? 1 : -1;
+    const entry = +(px * (0.95 + rnd() * .1)).toFixed(2), stopD = entry * (0.008 + rnd() * .012);
+    const mist = rnd() > .7 ? [MISTAKES[Math.floor(rnd() * MISTAKES.length)]] : [];
+    const emo = mist.length ? ['fomo', 'revenge', 'fear', 'bored'][Math.floor(rnd() * 4)] : ['calm', 'sure'][Math.floor(rnd() * 2)];
+    const r = mist.length ? (rnd() > .65 ? rnd() * 1.5 : -(0.8 + rnd() * 1.4)) : (rnd() > .45 ? 0.8 + rnd() * 2.4 : -1);
+    const d = new Date(d0); d.setDate(d.getDate() + Math.floor(i * 45 / 38));
+    out.push({ id: 'demo' + i, date: d.toISOString().slice(0, 10), sym, side, entry, stop: +(entry - dir * stopD).toFixed(2), exit: +(entry + dir * stopD * r).toFixed(2), qty: q, fee: +(entry * q * 0.0008).toFixed(2), setup: SETUPS[Math.floor(rnd() * 5)], emo, mist, note: '', demo: true });
+  }
+  S.trades = out; S.deposit = 1000; save(); render(); toast('Загружен пример — 38 сделок. Очистить можно внизу страницы');
+}
+
+// ---------- рендер ----------
+function render() {
+  const v = V[S.view] ? S.view : 'dash';
+  $$('#nav [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('#app').innerHTML = V[v]();
+  renderHero();
+  if (v === 'calc') { $('#app').oninput = calcUpdate; calcUpdate(); } else $('#app').oninput = null;
+  const foot = $('footer');
+  if (S.trades.some(t => t.demo) && !$('#clrDemo')) foot.insertAdjacentHTML('beforeend', '<button id="clrDemo">Очистить пример</button>');
+  if (!S.trades.some(t => t.demo)) $('#clrDemo')?.remove();
+}
+$('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) { S.view = b.dataset.v; save(); render(); } };
+$('#addBtn').onclick = () => tradeForm();
+$('#app').onclick = e => {
+  const b = e.target.closest('[data-act],[data-res],[data-id],#cSide button'); if (!b) return;
+  if (b.dataset.act === 'add') tradeForm(); if (b.dataset.act === 'demo') demo();
+  if (b.dataset.res != null) { S.filter = { ...S.filter, res: b.dataset.res }; save(); render(); }
+  if (b.dataset.id) tradeForm(S.trades.find(t => t.id === b.dataset.id));
+  if (b.closest('#cSide')) { $$('#cSide button').forEach(x => x.className = ''); b.className = 'on ' + (b.dataset.s === 'long' ? 'l' : 's'); calcUpdate(); }
+};
+$('#app').onchange = e => { if (e.target.id === 'fSym') { S.filter = { ...S.filter, sym: e.target.value }; save(); render(); } };
+document.addEventListener('click', e => { if (e.target.id === 'clrDemo') { S.trades = S.trades.filter(t => !t.demo); save(); render(); toast('Пример удалён'); } });
+$('#expBtn').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' })); a.download = 'tradelog-' + today() + '.json'; a.click(); };
+$('#csvBtn').onclick = () => {
+  const rows = [['Дата', 'Инструмент', 'Направление', 'Вход', 'Выход', 'Стоп', 'Кол-во', 'Комиссия', 'Результат $', 'R', 'Сетап', 'Эмоция', 'Ошибки', 'Заметка']].concat(S.trades.map(t => { const c = calc(t); return [t.date, t.sym, t.side, t.entry, t.exit ?? '', t.stop ?? '', t.qty, t.fee, c.pnl == null ? '' : c.pnl.toFixed(2), c.R == null ? '' : c.R.toFixed(2), t.setup, t.emo, (t.mist || []).join('; '), t.note]; }));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\n')], { type: 'text/csv' })); a.download = 'tradelog-' + today() + '.csv'; a.click();
+};
+$('#impBtn').onclick = () => $('#impFile').click();
+$('#impFile').onchange = async e => { try { const s = JSON.parse(await e.target.files[0].text()); if (!Array.isArray(s.trades)) throw 0; S = s; save(); render(); toast('Загружено сделок: ' + s.trades.length); } catch (er) { toast('Это не файл TradeLog'); } };
+render();
+</script>
+</body>
+</html>
