@@ -131,6 +131,21 @@ label.f, .f { display: flex; flex-direction: column; gap: 8px; font-weight: 700;
 .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--lime); color: #12200a; padding: 12px 22px; border-radius: 14px; opacity: 0; transition: .3s; pointer-events: none; font-weight: 800; z-index: 10; }
 .toast.on { opacity: 1; transform: translateX(-50%); }
 .burst { position: fixed; pointer-events: none; z-index: 20; width: 8px; height: 8px; border-radius: 2px; }
+.lv { display: block; width: 70px; height: 6px; border-radius: 3px; background: #2a2950; overflow: hidden; margin-top: 6px; }
+.lv i { display: block; height: 100%; background: var(--lime); }
+.tod { font: 700 18px Unbounded, sans-serif; margin: 22px 0 12px; }
+.tod span { color: var(--muted); font-size: 14px; margin-left: 6px; }
+.chk.part { background: conic-gradient(var(--c) var(--p), transparent 0) !important; }
+.chk .num { font: 800 22px Unbounded, sans-serif; color: var(--text); position: relative; z-index: 1; }
+.chk .num small { font-size: 13px; color: var(--muted); }
+.wk i.fz { background: #3ddcff33; color: #3ddcff; }
+.frz { margin-top: 16px; color: var(--muted); font-size: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.frz button { background: #3ddcff1f; color: #3ddcff; border: 1px solid #3ddcff55; border-radius: 10px; padding: 7px 14px; font-weight: 700; }
+.jr { display: flex; flex-direction: column; gap: 6px; }
+.jr > div { display: grid; grid-template-columns: 110px 32px 1fr 56px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2950; }
+.jd { color: var(--muted); font-size: 14px; } .jm { font-size: 22px; } .jc { color: var(--lime); font-weight: 700; text-align: right; font-size: 14px; }
+.arc { display: flex; align-items: center; gap: 8px; padding: 8px 0; flex-wrap: wrap; }
+.arc span { color: var(--muted); font-size: 13px; } .arc .btn { margin-left: auto; padding: 6px 12px; font-size: 14px; }
 footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 30px; }
 footer button { background: none; border: 0; color: var(--muted); text-decoration: underline; }
 @media (max-width: 860px) { .s4, .s6, .s8 { grid-column: span 12; } .hd { margin-left: 0; width: 100%; } .hrow { grid-template-columns: 1fr 70px; } .hrow .hm-wrap { grid-column: span 2; order: 3; } }
@@ -153,10 +168,10 @@ footer button { background: none; border: 0; color: var(--muted); text-decoratio
 'use strict';
 const KEY = 'seriya-v1';
 const COLORS = ['#b4ff5c', '#7c5cff', '#ff5ca8', '#3ddcff', '#ffb547', '#ff6b4a', '#5cffc0', '#f2f05c'];
-const EMOJI = ['💪', '📚', '🏃', '💧', '🧘', '😴', '🥗', '🇬🇧', '✍️', '🧠', '🚭', '📵', '🎸', '💻', '🧹', '🙏'];
+const EMOJI = ['💪', '📚', '🏃', '💧', '🧘', '😴', '🥗', '🗣', '✍️', '🧠', '🚭', '📵', '🎸', '💻', '🧹', '🙏'];
 const MOODS = ['😫', '😕', '😐', '🙂', '🤩'];
 const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-const SUGGEST = [['Тренировка', '💪', 3], ['Чтение 20 минут', '📚', 7], ['Вода 2 литра', '💧', 7], ['Английский', '🇬🇧', 5], ['Лечь до 23:30', '😴', 7], ['Без телефона час перед сном', '📵', 5]];
+const SUGGEST = [['Тренировка', '💪', 3], ['Чтение 20 минут', '📚', 7], ['Вода 2 литра', '💧', 7], ['Английский', '🗣', 5], ['Лечь до 23:30', '😴', 7], ['Без телефона час перед сном', '📵', 5]];
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -171,13 +186,19 @@ function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s &
 let S = load();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не удалось сохранить'); } };
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
-const done = (h, d) => !!(S.log[d] && S.log[d][h.id]);
+const cnt = (h, d) => (S.log[d] && S.log[d][h.id]) || 0;
+const done = (h, d) => cnt(h, d) >= (h.target || 1);
+const frozen = d => !!(S.freeze && S.freeze[d]);
 const active = () => S.habits.filter(h => !h.archived);
 const weekCount = (h, mon) => [...Array(7)].filter((_, i) => done(h, addD(mon, i))).length;
+const TOD = [['morning', '🌅 Утро'], ['day', '☀️ День'], ['evening', '🌙 Вечер'], ['any', 'Любое время']];
+// уровень: каждая отметка — опыт, уровни растут всё медленнее
+const xp = () => Object.values(S.log).reduce((s, d) => s + Object.keys(d).length, 0);
+const level = x => Math.floor(Math.sqrt(x / 5)) + 1, lvlFloor = l => (l - 1) ** 2 * 5;
 
-// Серия: ежедневная — дни подряд (сегодня ещё не отмечено — не рвёт); недельная — недели подряд с выполненной целью
+// Серия: ежедневная — дни подряд (сегодня ещё не отмечено — не рвёт, «заморозка» — тоже); недельная — недели подряд с выполненной целью
 function streak(h) {
-  if (h.goal >= 7) { let n = 0, d = today(); if (!done(h, d)) d = addD(d, -1); while (done(h, d) && d >= h.created) { n++; d = addD(d, -1); } return { n, unit: plural(n, 'день', 'дня', 'дней') }; }
+  if (h.goal >= 7) { let n = 0, d = today(); if (!done(h, d)) d = addD(d, -1); while (d >= h.created && (done(h, d) || frozen(d))) { if (done(h, d)) n++; d = addD(d, -1); } return { n, unit: plural(n, 'день', 'дня', 'дней') }; }
   let n = 0, mon = monday(today());
   if (weekCount(h, mon) >= h.goal) n++;
   mon = addD(mon, -7);
@@ -187,7 +208,8 @@ function streak(h) {
 function bestDaily(h) { let b = 0, c = 0; for (let d = h.created; d <= today(); d = addD(d, 1)) { if (done(h, d)) { c++; b = Math.max(b, c); } else c = 0; } return b; }
 // % выполнения цели за последние 30 дней (для «3 раза в неделю» — от 3/7 дней)
 function rate(h, n = 30) { const from = h.created > addD(today(), -n + 1) ? h.created : addD(today(), -n + 1), len = Math.max(1, Math.round((new Date(today()) - new Date(from)) / 864e5) + 1); let c = 0; for (let d = from; d <= today(); d = addD(d, 1)) if (done(h, d)) c++; return Math.min(100, Math.round(c / (len * h.goal / 7) * 100)); }
-const dueToday = h => h.goal >= 7 || weekCount(h, monday(today())) < h.goal || done(h, today());
+const dueToday = h => done(h, today()) || (!frozen(today()) && (h.goal >= 7 || weekCount(h, monday(today())) < h.goal));
+const freezesThisMonth = () => Object.keys(S.freeze || {}).filter(d => d.startsWith(today().slice(0, 7))).length;
 
 function ring(p, size = 64) {
   const r = size / 2 - 7, c = 2 * Math.PI * r;
@@ -196,7 +218,9 @@ function ring(p, size = 64) {
 function renderHd() {
   const hs = active().filter(dueToday), n = hs.filter(h => done(h, today())).length;
   const best = active().map(h => ({ h, s: streak(h) })).sort((a, b) => b.s.n - a.s.n)[0];
-  $('#hd').innerHTML = `${ring(hs.length ? n / hs.length : 0)}<div><b>${n} из ${hs.length}</b><span>на сегодня</span></div>${best && best.s.n ? `<div style="margin-left:8px"><b>${best.h.emoji} ${best.s.n}</b><span>лучшая серия · ${best.s.unit}</span></div>` : ''}`;
+  const x = xp(), l = level(x);
+  $('#hd').innerHTML = `${ring(hs.length ? n / hs.length : 0)}<div><b>${n} из ${hs.length}</b><span>${frozen(today()) ? '❄ день заморожен' : 'на сегодня'}</span></div>${best && best.s.n ? `<div style="margin-left:8px"><b>${best.h.emoji} ${best.s.n}</b><span>лучшая серия · ${best.s.unit}</span></div>` : ''}
+    <div style="margin-left:8px" title="${x} отметок"><b>Ур. ${l}</b><span class="lv"><i style="width:${(x - lvlFloor(l)) / (lvlFloor(l + 1) - lvlFloor(l)) * 100}%"></i></span></div>`;
 }
 
 // ---------- сегодня ----------
@@ -204,20 +228,30 @@ function drawToday() {
   const t = today(), mon = monday(t), hs = active();
   const dm = S.days[t] || {};
   $('#app').innerHTML = `<div class="date-row"><h1>${new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</h1><span class="muted">${hs.length ? (hs.filter(dueToday).every(h => done(h, t)) && hs.filter(dueToday).length ? 'День закрыт 🎉' : 'нажми на квадрат, когда сделал') : ''}</span></div>
-  <div class="habits">${hs.map((h, k) => { const s = streak(h), wc = weekCount(h, mon); return `<div class="hb ${done(h, t) ? 'done' : ''}" style="--c:${h.color};animation-delay:${k * 50}ms">
-    <div class="top" data-edit="${h.id}"><span class="em">${h.emoji}</span><div><div class="nm">${esc(h.name)}</div><div class="gl">${h.goal >= 7 ? 'каждый день' : `${h.goal} ${plural(h.goal, 'раз', 'раза', 'раз')} в неделю · сделано ${wc}`}${!dueToday(h) ? ' · цель недели выполнена ✓' : ''}</div></div></div>
-    <button class="chk" data-tog="${h.id}" aria-label="Отметить"><svg viewBox="0 0 36 36"><path d="M8 19l7 7 13-15"/></svg>${h.goal < 7 ? `<span class="cnt">${wc}/${h.goal}</span>` : ''}</button>
-    <div class="bottom"><div class="wk">${WD.map((w, i) => { const d = addD(mon, i); return `<i class="${done(h, d) ? 'on' : ''} ${d === t ? 'td' : ''}">${w}</i>`; }).join('')}</div>
-      <div class="streak"><b>${s.n}</b><span>${s.n ? s.unit + ' подряд' : 'начни серию'}</span></div></div></div>`; }).join('')}
-    <button class="addcard" id="add"><span style="font-size:32px">＋</span>Новая привычка</button></div>
+  ${(() => {
+    const card = (h, k) => { const s = streak(h), wc = weekCount(h, mon), tg = h.target || 1, c = cnt(h, t); return `<div class="hb ${done(h, t) ? 'done' : ''}" style="--c:${h.color};animation-delay:${k * 50}ms">
+    <div class="top" data-edit="${h.id}"><span class="em">${h.emoji}</span><div><div class="nm">${esc(h.name)}</div><div class="gl">${tg > 1 ? `${tg} ${esc(h.unit || 'раз')} · ` : ''}${h.goal >= 7 ? 'каждый день' : `${h.goal} ${plural(h.goal, 'раз', 'раза', 'раз')} в неделю · сделано ${wc}`}${!dueToday(h) && !frozen(t) ? ' · цель недели выполнена ✓' : ''}</div></div></div>
+    <button class="chk ${tg > 1 && c && !done(h, t) ? 'part' : ''}" data-tog="${h.id}" aria-label="Отметить" style="${tg > 1 ? `--p:${Math.min(1, c / tg) * 360}deg` : ''}">${tg > 1 && !done(h, t) ? `<span class="num">${c}<small>/${tg}</small></span>` : '<svg viewBox="0 0 36 36"><path d="M8 19l7 7 13-15"/></svg>'}${h.goal < 7 && tg === 1 ? `<span class="cnt">${wc}/${h.goal}</span>` : ''}</button>
+    <div class="bottom"><div class="wk">${WD.map((w, i) => { const d = addD(mon, i); return `<i class="${done(h, d) ? 'on' : frozen(d) ? 'fz' : ''} ${d === t ? 'td' : ''}">${w}</i>`; }).join('')}</div>
+      <div class="streak"><b>${s.n}</b><span>${s.n ? s.unit + ' подряд' : 'начни серию'}</span></div></div></div>`; };
+    const grouped = hs.some(h => h.tod && h.tod !== 'any');
+    const add = '<button class="addcard" id="add"><span style="font-size:32px">＋</span>Новая привычка</button>';
+    if (!grouped) return `<div class="habits">${hs.map(card).join('')}${add}</div>`;
+    let k = 0;
+    const gs = TOD.map(([id, n]) => [n, hs.filter(h => (h.tod || 'any') === id)]).filter(([, g]) => g.length);
+    return gs.map(([n, g], gi) => `<div class="tod">${n} <span>${g.filter(h => done(h, t)).length}/${g.length}</span></div><div class="habits">${g.map(h => card(h, k++)).join('')}${gi === gs.length - 1 ? add : ''}</div>`).join('');
+  })()}
+  ${hs.some(h => h.goal >= 7) ? `<div class="frz">${frozen(t) ? `❄ Сегодня заморожен — ежедневные серии не сгорят. <button data-frz="0">Отменить</button>` : `Заболел или в дороге? <button data-frz="1">❄ Заморозить сегодня</button> <span>серии не сгорят · осталось ${Math.max(0, 2 - freezesThisMonth())} из 2 в этом месяце</span>`}</div>` : ''}
   ${hs.length ? `<div class="mood"><b>Как день?</b><div class="ms">${MOODS.map((m, i) => `<button data-mood="${i + 1}" class="${dm.mood === i + 1 ? 'on' : ''}">${m}</button>`).join('')}</div><input id="note" placeholder="Заметка о дне — что помогло, что мешало" value="${esc(dm.note || '')}" maxlength="200"></div>` : ''}`;
   if (hs.length < 3) $('#app').insertAdjacentHTML('beforeend', `<div class="card" style="margin-top:16px"><div class="ct">С чего начать <span>нажми — добавится сразу</span></div><div class="opts txt">${SUGGEST.map(([n, e, g], i) => hs.some(h => h.name === n) ? '' : `<button data-sug="${i}">${e} ${n}</button>`).join('')}</div><p style="color:var(--muted);margin-top:14px">Совет: начни с 2–3 привычек. Цель «3 раза в неделю» держится лучше, чем «каждый день» — пропуск не обнуляет серию.</p></div>`);
 }
-function toggle(id, d = today(), el) {
-  const h = S.habits.find(x => x.id === id), was = done(h, d);
-  S.log[d] = S.log[d] || {}; if (was) delete S.log[d][id]; else S.log[d][id] = 1;
+// step: на «Сегодня» счётная привычка растёт по +1, в таблице недели — сразу целиком
+function toggle(id, d = today(), el, step) {
+  const h = S.habits.find(x => x.id === id), was = done(h, d), tg = h.target || 1;
+  S.log[d] = S.log[d] || {};
+  if (was) delete S.log[d][id]; else S.log[d][id] = step ? Math.min(tg, cnt(h, d) + 1) : tg;
   save();
-  if (!was && el) burst(el, h.color);
+  if (!was && el && done(h, d)) burst(el, h.color);
   if (!was && d === today()) { const hs = active().filter(dueToday); if (hs.every(x => done(x, d))) setTimeout(() => toast('Все привычки на сегодня — сделано! 🔥'), 300); }
 }
 function burst(el, color) {
@@ -276,6 +310,9 @@ function drawStats() {
       ${ins.length ? ins.slice(0, 2).map(x => `<p>В дни, когда есть <b>${x.h.emoji} ${esc(x.h.name)}</b>, настроение ${x.diff > 0 ? 'выше' : 'ниже'} на <b>${Math.abs(x.diff).toFixed(1).replace(".", ",")}</b> по шкале из 5.</p>`).join('') : '<p style="color:var(--muted);font-size:15px">Отмечай настроение дня — через пару недель здесь появится, какие привычки реально поднимают его.</p>'}
     </div></div>
     <div class="card s12"><div class="ct">По дням недели <span>сколько от цели выполняешь, последние 8 недель</span></div><div class="wd">${wdR.map((v, i) => `<div><b style="color:var(--text)">${Math.round(v * 100)}%</b><i style="height:${v * 100}%;background:${i === worstD ? '#ff5ca8' : 'var(--lime)'}"></i>${WD[i]}</div>`).join('')}</div></div>
+    ${(() => { const js = Object.entries(S.days).filter(([, v]) => v.mood || v.note).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14); return js.length ? `<div class="card s8"><div class="ct">Дневник <span>последние записи о днях</span></div><div class="jr">${js.map(([d, v]) => { const n = hs.filter(h => done(h, d)).length; return `<div><span class="jd">${new Date(d + 'T12:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', weekday: 'short' })}</span><span class="jm">${v.mood ? MOODS[v.mood - 1] : '·'}</span><span class="jn">${esc(v.note || '')}</span><span class="jc">${n}/${hs.length} ✓</span></div>`; }).join('')}</div></div>` : ''; })()}
+    <div class="card s4"><div class="ct">Уровень ${level(xp())}</div><div class="insight"><p><b>${xp()}</b> ${plural(xp(), 'отметка', 'отметки', 'отметок')} всего. До уровня ${level(xp()) + 1} — ещё <b>${lvlFloor(level(xp()) + 1) - xp()}</b>.</p><p style="color:var(--muted);font-size:15px">Заморозок в этом месяце: ${freezesThisMonth()} из 2.</p></div>
+      ${S.habits.some(h => h.archived) ? `<div class="ct" style="margin-top:16px">Архив</div>${S.habits.filter(h => h.archived).map(h => `<div class="arc">${h.emoji} ${esc(h.name)} <span>${bestDaily(h)} — лучшая серия</span><button class="btn ghost" data-unarch="${h.id}">Вернуть</button></div>`).join('')}` : ''}</div>
   </div>`;
 }
 
@@ -287,16 +324,20 @@ function habitForm(h) {
   <div class="db"><label class="f">Название<input type="text" id="hN" value="${esc(h.name)}" placeholder="Например: зарядка 10 минут" maxlength="40"></label>
     <div class="f">Значок<div class="opts" id="hE">${EMOJI.map(e => `<button data-e="${e}" class="${h.emoji === e ? 'on' : ''}">${e}</button>`).join('')}</div></div>
     <div class="f">Цвет<div class="opts col" id="hC">${COLORS.map(c => `<button data-c="${c}" class="${h.color === c ? 'on' : ''}" style="background:${c};color:${c}"></button>`).join('')}</div></div>
-    <div class="f">Как часто<div class="opts txt" id="hG">${[[7, 'Каждый день'], [5, '5 раз в неделю'], [4, '4 раза'], [3, '3 раза'], [2, '2 раза'], [1, '1 раз']].map(([g, n]) => `<button data-g="${g}" class="${h.goal === g ? 'on' : ''}">${n}</button>`).join('')}</div></div></div>
-  <div class="df">${isNew ? '' : '<button class="btn danger" id="hDel">Удалить</button>'}<span class="sp"></span><button class="btn" id="hSave">${isNew ? 'Добавить' : 'Сохранить'}</button></div>`;
+    <div class="f">Как часто<div class="opts txt" id="hG">${[[7, 'Каждый день'], [5, '5 раз в неделю'], [4, '4 раза'], [3, '3 раза'], [2, '2 раза'], [1, '1 раз']].map(([g, n]) => `<button data-g="${g}" class="${h.goal === g ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+    <div class="f">Когда<div class="opts txt" id="hT">${TOD.map(([k, n]) => `<button data-t="${k}" class="${(h.tod || 'any') === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+    <div class="f">Сколько за день <span style="color:var(--muted);font-size:13px">— для «8 стаканов воды», «20 страниц»: каждое нажатие +1</span>
+      <div style="display:flex;gap:10px"><input type="text" id="hTg" inputmode="numeric" value="${h.target || 1}" style="width:90px"><input type="text" id="hU" value="${esc(h.unit || '')}" placeholder="стаканов, страниц, минут…" maxlength="20"></div></div></div>
+  <div class="df">${isNew ? '' : '<button class="btn danger" id="hDel">Удалить</button><button class="btn ghost" id="hArc">В архив</button>'}<span class="sp"></span><button class="btn" id="hSave">${isNew ? 'Добавить' : 'Сохранить'}</button></div>`;
   d.showModal(); if (isNew) setTimeout(() => $('#hN').focus(), 50);
   d.onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.matches('[data-close]')) d.close();
-    for (const k of ['e', 'c', 'g']) if (b.dataset[k]) b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    for (const k of ['e', 'c', 'g', 't']) if (b.dataset[k]) b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    if (b.id === 'hArc') { h.archived = today(); save(); d.close(); render(); toast('В архиве — история сохранена, вернуть можно в «Статистике»'); }
     if (b.id === 'hSave') {
       const name = $('#hN').value.trim(); if (!name) return toast('Назови привычку');
-      const v = { name, emoji: $('#hE .on')?.dataset.e || '✅', color: $('#hC .on')?.dataset.c || COLORS[0], goal: +($('#hG .on')?.dataset.g || 7) };
+      const v = { name, emoji: $('#hE .on')?.dataset.e || '✅', color: $('#hC .on')?.dataset.c || COLORS[0], goal: +($('#hG .on')?.dataset.g || 7), tod: $('#hT .on')?.dataset.t || 'any', target: Math.max(1, Math.min(999, parseInt($('#hTg').value) || 1)), unit: $('#hU').value.trim() };
       if (isNew) S.habits.push({ id: uid(), created: today(), ...v }); else Object.assign(h, v);
       save(); d.close(); render();
     }
@@ -314,7 +355,9 @@ function render() {
 $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) { S.view = b.dataset.v; save(); render(); } };
 $('#app').addEventListener('click', e => {
   const b = e.target.closest('button, [data-edit]'); if (!b) return;
-  if (b.dataset.tog) { const card = b.closest('.hb'); toggle(b.dataset.tog, today(), b); card.classList.toggle('done'); setTimeout(render, 380); return; }
+  if (b.dataset.tog) { const card = b.closest('.hb'), h = S.habits.find(x => x.id === b.dataset.tog); toggle(h.id, today(), b, true); card.classList.toggle('done', done(h, today())); setTimeout(render, (h.target || 1) > 1 && !done(h, today()) ? 0 : 380); return; }
+  if (b.dataset.frz) { S.freeze = S.freeze || {}; if (b.dataset.frz === '1') { if (freezesThisMonth() >= 2) return toast('Лимит: 2 заморозки в месяц — иначе это уже не привычка 🙂'); S.freeze[today()] = 1; toast('❄ День заморожен'); } else delete S.freeze[today()]; save(); render(); return; }
+  if (b.dataset.unarch) { const h = S.habits.find(x => x.id === b.dataset.unarch); delete h.archived; save(); render(); toast('Привычка вернулась'); return; }
   if (b.dataset.edit) return habitForm(S.habits.find(h => h.id === b.dataset.edit));
   if (b.id === 'add') return habitForm();
   if (b.dataset.sug != null) { const [n, em, g] = SUGGEST[+b.dataset.sug]; S.habits.push({ id: uid(), created: today(), name: n, emoji: em, color: COLORS[active().length % COLORS.length], goal: g }); save(); render(); toast('Добавлено: ' + n); return; }

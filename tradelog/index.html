@@ -82,6 +82,23 @@ nav .add { margin-left: auto; background: var(--up); color: #04150d; }
 .side.long { background: rgba(47,213,139,.15); color: var(--up); } .side.short { background: rgba(255,92,108,.15); color: var(--down); }
 .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--panel2); color: var(--muted); margin-right: 4px; }
 .tag.bad { background: rgba(255,92,108,.12); color: #ff97a1; }
+a.tag { text-decoration: none; color: var(--blue); }
+.alert { border-color: var(--down); background: rgba(255,92,108,.08); margin-bottom: 16px; font-size: 17px; }
+.pcal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.pcal .cd b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+nav { scrollbar-width: none; } nav::-webkit-scrollbar { display: none; }
+.pcal .cw { font-size: 13px; color: var(--muted); text-align: center; }
+.pcal .cd { min-height: 78px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
+.pcal .cd[data-day] { cursor: pointer; } .pcal .cd[data-day]:hover { border-color: var(--muted); }
+.pcal .cd span { font: 600 12px var(--mono); color: var(--muted); }
+.pcal .cd b { font: 700 14px var(--mono); } .pcal .cd small { font-size: 11px; color: var(--muted); }
+.pcal .cd.up b { color: var(--up); } .pcal .cd.down b { color: var(--down); }
+.chk { display: flex; flex-direction: column; gap: 8px; }
+.chk label { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; font-size: 16px; }
+.chk label:has(input:checked) { border-color: var(--up); background: rgba(47,213,139,.07); }
+.chk input { width: 18px; height: 18px; accent-color: var(--up); }
+.chk .x { margin-left: auto; background: none; border: 0; color: var(--muted); cursor: pointer; }
+.ckadd input { margin-top: 8px; width: 100%; }
 .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
 .scroll { overflow-x: auto; }
 
@@ -156,6 +173,7 @@ footer button { background: none; border: 0; color: var(--muted); text-decoratio
   <nav id="nav">
     <button data-v="dash" class="on">Обзор</button>
     <button data-v="trades">Сделки</button>
+    <button data-v="cal">Календарь</button>
     <button data-v="mist">Ошибки и эмоции</button>
     <button data-v="calc">Калькулятор позиции</button>
     <button class="add" id="addBtn">+ Сделка</button>
@@ -183,7 +201,7 @@ const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const num = v => { const n = parseFloat(String(v).replace(',', '.').replace(/\s/g, '')); return isFinite(n) ? n : null; };
 const money = (v, sign = true) => v == null ? '—' : (sign && v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleString('ru-RU', { maximumFractionDigits: Math.abs(v) < 10 ? 2 : 0 }) + ' $';
 const fx = (v, d = 2) => v == null || !isFinite(v) ? '—' : v.toLocaleString('ru-RU', { maximumFractionDigits: d, minimumFractionDigits: 0 });
@@ -292,7 +310,10 @@ V.dash = () => {
   if (worstM) lines.push(`Ошибка «${esc(worstM.k)}» стоила <b>${money(worstM.total)}</b> — уберёшь её, и итог станет ${money(st.total - worstM.total)}.`);
   const wd = WD.map((n, i) => ({ n, v: list.filter(t => (new Date(t.date + 'T12:00').getDay() + 6) % 7 === i).reduce((s, t) => s + calc(t).pnl, 0) }));
   const wmx = Math.max(...wd.map(x => Math.abs(x.v))) || 1;
-  return `<div class="grid">
+  // распределение R по корзинам
+  const rb = [['≤ −2', -1e9, -2], ['−2…−1', -2, -1], ['−1…0', -1, 0], ['0…1', 0, 1], ['1…2', 1, 2], ['2…3', 2, 3], ['≥ 3', 3, 1e9]].map(([n, a, b]) => ({ n, a, v: list.filter(t => { const R = calc(t).R; return R != null && R >= a && R < b; }).length }));
+  const rmx = Math.max(...rb.map(x => x.v)) || 1;
+  return `${rulesAlert()}<div class="grid">
     <div class="card s3 kpi"><div class="l">Итог</div><div class="v ${cls(st.total)}">${money(st.total)}</div><div class="h">${S.deposit ? fx(st.total / S.deposit * 100, 1) + '% к депозиту ' + fx(S.deposit, 0) + ' $' : ''}</div></div>
     <div class="card s3 kpi"><div class="l">Сделок в плюс</div><div class="v">${fx(st.wr, 0)}%</div><div class="h">${list.filter(t => calc(t).pnl > 0).length} из ${st.n}</div></div>
     <div class="card s3 kpi"><div class="l">Профит-фактор</div><div class="v ${st.pf >= 1 ? 'up' : 'down'}">${st.pf === Infinity ? '∞' : fx(st.pf)}</div><div class="h">прибыль ÷ убытки · норма от 1,5</div></div>
@@ -304,7 +325,35 @@ V.dash = () => {
     <div class="card s4 kpi"><div class="l">Средняя прибыль / убыток</div><div class="v" style="font-size:22px"><span class="up">${money(st.avgW)}</span> <span class="muted">/</span> <span class="down">${money(st.avgL)}</span></div><div class="h">${st.avgW && st.avgL ? 'прибыль больше убытка в ' + fx(st.avgW / -st.avgL, 1) + ' раза' : ''}</div></div>
     <div class="card s4 kpi"><div class="l">Макс. просадка</div><div class="v down">${money(st.dd)}</div><div class="h">серия убытков подряд: ${st.maxL}, прибылей: ${st.maxW}</div></div>
     <div class="card s4 kpi"><div class="l">Лучшая / худшая</div><div class="v" style="font-size:22px"><span class="up">${money(st.best.pnl)}</span> <span class="muted">/</span> <span class="down">${money(st.worst.pnl)}</span></div><div class="h">${esc(st.best.t.sym)} · ${esc(st.worst.t.sym)}</div></div>
+    <div class="card s6"><div class="ct">Распределение R <span>сколько сделок с каким результатом в рисках</span></div><div class="wk">${rb.map(x => `<div><b>${x.v || ''}</b><i style="height:${x.v / rmx * 100}%;background:${x.a < 0 ? 'var(--down)' : 'var(--up)'};opacity:${x.v ? 1 : .2}"></i>${x.n}</div>`).join('')}</div>
+      <div class="muted" style="margin-top:10px;font-size:14px">${rb[0].v ? `<span class="down">${rb[0].v} ${plural(rb[0].v, 'сделка', 'сделки', 'сделок')} хуже −2R</span> — стоп не соблюдался. ` : 'Ни одной сделки хуже −2R — стопы соблюдаются. '}${rb[6].v ? `${rb[6].v} ${plural(rb[6].v, 'сделка', 'сделки', 'сделок')} дали 3R+ — такие и делают итог.` : ''}</div></div>
+    <div class="card s6"><div class="ct">Лонг / шорт и инструменты</div>${barsHtml(groupBy(list, t => t.side === 'short' ? 'SHORT' : 'LONG'))}<div style="height:14px"></div>${barsHtml(groupBy(list, t => t.sym).slice(0, 6))}</div>
   </div>`;
+};
+
+// ---------- правила риска ----------
+function todayState() { const td = S.trades.filter(t => t.date === today()); return { n: td.length, pnl: td.filter(t => calc(t).closed).reduce((s, t) => s + calc(t).pnl, 0), lossRow: (() => { let k = 0; for (const t of closedTrades().reverse()) { if (calc(t).pnl < 0) k++; else break; } return k; })() }; }
+function rulesBroken() {
+  const r = S.rules || {}, s = todayState(), out = [];
+  if (r.maxLoss && s.pnl <= -r.maxLoss) out.push(`дневной лимит убытка ${money(-r.maxLoss)} достигнут (сегодня ${money(s.pnl)})`);
+  if (r.maxTrades && s.n >= r.maxTrades) out.push(`сегодня уже ${s.n} ${plural(s.n, 'сделка', 'сделки', 'сделок')} при лимите ${r.maxTrades}`);
+  if (r.maxRow && s.lossRow >= r.maxRow) out.push(`${s.lossRow} ${plural(s.lossRow, 'убыток', 'убытка', 'убытков')} подряд — правило «${r.maxRow} подряд и пауза»`);
+  return out;
+}
+const rulesAlert = () => { const b = rulesBroken(); return b.length ? `<div class="card alert">⛔ <b>Стоп на сегодня.</b> ${b.join('; ')}. Закрой терминал — дальше обычно идёт «отыгрывание».</div>` : ''; };
+
+// ---------- календарь PnL ----------
+V.cal = () => {
+  const list = closedTrades(); if (!list.length) return V.dash();
+  const m = S.calM || today().slice(0, 7), [y, mo] = m.split('-').map(Number), first = new Date(y, mo - 1, 1), nd = new Date(y, mo, 0).getDate(), off = (first.getDay() + 6) % 7;
+  const byDay = {}; list.forEach(t => { (byDay[t.date] = byDay[t.date] || { v: 0, n: 0 }); byDay[t.date].v += calc(t).pnl; byDay[t.date].n++; });
+  const mDays = Object.entries(byDay).filter(([d]) => d.startsWith(m)), mx = Math.max(1, ...mDays.map(([, x]) => Math.abs(x.v))), mt = mDays.reduce((s, [, x]) => s + x.v, 0);
+  const cells = [...Array(off)].map(() => '<div></div>').concat([...Array(nd)].map((_, i) => { const d = `${m}-${String(i + 1).padStart(2, '0')}`, x = byDay[d]; return `<div class="cd ${x ? cls(x.v) : ''}" style="${x ? `background:${x.v >= 0 ? 'rgba(47,213,139,' : 'rgba(255,92,108,'}${.12 + Math.abs(x.v) / mx * .5})` : ''}" ${x ? `data-day="${d}"` : ''}><span>${i + 1}</span>${x ? `<b>${money(x.v)}</b><small>${x.n} ${plural(x.n, 'сделка', 'сделки', 'сделок')}</small>` : ''}</div>`; }));
+  const months = [...new Set(list.map(t => t.date.slice(0, 7)))].sort().reverse().map(k => ({ k, ...stats(list.filter(t => t.date.startsWith(k))) }));
+  const green = mDays.filter(([, x]) => x.v > 0).length;
+  return `<div class="grid"><div class="card s8"><div class="ct"><button class="btn ghost sm" data-cm="-1">←</button> ${first.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })} <button class="btn ghost sm" data-cm="1">→</button><span>итог <b class="${cls(mt)}">${money(mt)}</b> · ${green} из ${mDays.length} ${plural(mDays.length, 'дня', 'дней', 'дней')} в плюс</span></div>
+    <div class="pcal">${WD.map(w => `<div class="cw">${w}</div>`).join('')}${cells.join('')}</div></div>
+    <div class="card s4"><div class="ct">По месяцам</div><table class="tbl"><thead><tr><th>Месяц</th><th class="num">Сделок</th><th class="num">В плюс</th><th class="num">Итог</th></tr></thead><tbody>${months.map(x => `<tr class="row" data-mk="${x.k}"><td>${new Date(x.k + '-15').toLocaleDateString('ru-RU', { month: 'short', year: '2-digit' })}</td><td class="num">${x.n}</td><td class="num">${fx(x.wr, 0)}%</td><td class="num ${cls(x.total)}"><b>${money(x.total)}</b></td></tr>`).join('')}</tbody></table></div></div>`;
 };
 
 V.trades = () => {
@@ -312,6 +361,7 @@ V.trades = () => {
   const syms = [...new Set(S.trades.map(t => t.sym))].sort();
   let list = S.trades.slice().sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   if (f.sym) list = list.filter(t => t.sym === f.sym);
+  if (f.day) list = list.filter(t => t.date === f.day);
   if (f.res === 'win') list = list.filter(t => calc(t).pnl > 0); if (f.res === 'loss') list = list.filter(t => calc(t).pnl < 0); if (f.res === 'open') list = list.filter(t => !calc(t).closed);
   if (!S.trades.length) return V.dash();
   const st = stats(list.filter(t => calc(t).closed));
@@ -319,6 +369,7 @@ V.trades = () => {
     <div class="filters">
       <select id="fSym" style="width:auto"><option value="">Все инструменты</option>${syms.map(s => `<option ${f.sym === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
       <div class="chips">${[['', 'Все'], ['win', 'В плюс'], ['loss', 'В минус'], ['open', 'Открытые']].map(([k, n]) => `<button class="chip ${(f.res || '') === k ? 'on' : ''}" data-res="${k}">${n}</button>`).join('')}</div>
+      ${f.day ? `<button class="chip on" data-dayx>${fdate(f.day)} ✕</button>` : ''}
       <span class="muted" style="margin-left:auto;align-self:center">${list.length} ${plural(list.length, 'сделка', 'сделки', 'сделок')} · итог <b class="mono ${cls(st.total)}">${money(st.total)}</b></span>
     </div>
     <div class="scroll"><table class="tbl"><thead><tr><th>Дата</th><th>Инструмент</th><th></th><th class="num">Вход</th><th class="num">Выход</th><th class="num">Результат</th><th class="num">R</th><th>Сетап · эмоция · ошибки</th></tr></thead><tbody>
@@ -326,7 +377,7 @@ V.trades = () => {
       <td class="num">${fx(t.entry, 6)}</td><td class="num">${c.closed ? fx(t.exit, 6) : '<span class="muted">открыта</span>'}</td>
       <td class="num ${cls(c.pnl)}"><b>${c.closed ? money(c.pnl) : '—'}</b><br><small class="muted">${c.pct != null ? (c.pct > 0 ? '+' : '') + fx(c.pct) + '%' : ''}</small></td>
       <td class="num ${cls(c.R)}">${c.R != null ? (c.R > 0 ? '+' : '') + fx(c.R, 1) : '—'}</td>
-      <td>${t.setup ? `<span class="tag">${esc(t.setup)}</span>` : ''}${t.emo ? `<span class="tag">${EMOS.find(e => e[0] === t.emo)?.[1] || ''}</span>` : ''}${(t.mist || []).map(m => `<span class="tag bad">${esc(m)}</span>`).join('')}</td></tr>`; }).join('')}
+      <td>${t.setup ? `<span class="tag">${esc(t.setup)}</span>` : ''}${t.emo ? `<span class="tag">${EMOS.find(e => e[0] === t.emo)?.[1] || ''}</span>` : ''}${(t.mist || []).map(m => `<span class="tag bad">${esc(m)}</span>`).join('')}${t.link ? `<a class="tag" href="${esc(t.link)}" target="_blank" rel="noopener" title="Скрин графика">🔗 график</a>` : ''}${t.note ? `<span class="tag" title="${esc(t.note)}">📝</span>` : ''}</td></tr>`; }).join('')}
     </tbody></table></div></div>`;
 };
 
@@ -361,9 +412,22 @@ V.calc = () => {
         <label class="f w4">Плечо: <b id="cLevV">×${c.lev}</b><input type="range" id="cLev" min="1" max="50" value="${c.lev}" style="padding:0"></label>
       </div></div>
     <div class="card s6" id="calcOut"></div>
+    <div class="card s6"><div class="ct">Чек-лист перед входом <span>все галочки — тогда жми кнопку</span></div>
+      <div class="chk">${(S.check || DEF_CHECK).map((t, i) => `<label><input type="checkbox" data-ck="${i}"> ${esc(t)}<button class="x" data-ckdel="${i}" title="Убрать">✕</button></label>`).join('')}</div>
+      <form id="ckAdd" class="ckadd"><input id="ckNew" placeholder="+ своё правило" maxlength="60"></form>
+      <div id="ckRes" class="muted" style="margin-top:10px">Отметь все пункты</div></div>
+    <div class="card s6"><div class="ct">Правила риска <span>нарушишь — на «Обзоре» появится «Стоп на сегодня»</span></div>
+      <div class="fg">
+        <label class="f w2">Депозит, $<input id="rDep" inputmode="decimal" value="${S.deposit || ''}"></label>
+        <label class="f w2">Макс. убыток за день, $<input id="rLoss" inputmode="decimal" value="${S.rules?.maxLoss || ''}" placeholder="например 30"></label>
+        <label class="f w2">Макс. сделок в день<input id="rTr" inputmode="numeric" value="${S.rules?.maxTrades || ''}" placeholder="например 5"></label>
+        <label class="f w2">Пауза после N убытков подряд<input id="rRow" inputmode="numeric" value="${S.rules?.maxRow || ''}" placeholder="например 3"></label>
+      </div>${(() => { const b = rulesBroken(); return b.length ? `<div class="down" style="margin-top:8px">Сейчас нарушено: ${b.join('; ')}</div>` : S.rules ? '<div class="up" style="margin-top:8px">Сегодня правила соблюдены ✓</div>' : ''; })()}</div>
   </div>`;
 };
-function calcUpdate() {
+const DEF_CHECK = ['Сетап из моего списка, а не «кажется, полетит»', 'Стоп определён до входа', 'Риск не больше 1% депозита', 'Не отыгрываюсь после убытка', 'Цель минимум 2R'];
+function calcUpdate(e) {
+  if (e && e.target.closest && (e.target.closest('.chk') || e.target.id === 'ckNew' || /^r(Dep|Loss|Tr|Row)$/.test(e.target.id))) return;
   const c = S.calc = { dep: num($('#cDep').value), risk: num($('#cRisk').value), entry: num($('#cEntry').value), stop: num($('#cStop').value), lev: +$('#cLev').value, side: $('#cSide .on')?.dataset.s || 'long' };
   $('#cLevV').textContent = '×' + c.lev; save();
   const out = $('#calcOut');
@@ -406,10 +470,11 @@ function tradeForm(t) {
     <div class="f">Что чувствовал при входе<div class="chips" id="tEmo">${EMOS.map(([k, n]) => `<button class="chip ${t.emo === k ? 'on' : ''}" data-e="${k}">${n}</button>`).join('')}</div></div>
     <div class="f">Ошибки <small>(честно — это самое полезное)</small><div class="chips" id="tMist">${MISTAKES.map(m => `<button class="chip ${(t.mist || []).includes(m) ? 'on badm' : ''}" data-m="${m}">${m}</button>`).join('')}</div></div>
     <label class="f">Заметка<textarea id="tNote" rows="2" placeholder="почему вошёл, что пошло не так">${esc(t.note)}</textarea></label>
+    <label class="f">Ссылка на скрин графика <small>(TradingView → «Сделать снимок» → ссылка)</small><input id="tLink" value="${esc(t.link || '')}" placeholder="https://www.tradingview.com/x/..."></label>
   </div>
   <div class="df">${isNew ? '' : '<button class="btn danger" id="tDel">Удалить</button>'}<span class="sp"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" id="tSave">Сохранить</button></div>`;
   d.showModal();
-  const read = () => ({ date: $('#tDate').value || today(), sym: $('#tSym').value.trim().toUpperCase(), side: $('#tSide .on').dataset.s, entry: num($('#tEntry').value), exit: num($('#tExit').value), stop: num($('#tStop').value), qty: num($('#tQty').value), fee: num($('#tFee').value) || 0, setup: $('#tSetup').value, emo: $('#tEmo .on')?.dataset.e || '', mist: $$('#tMist .on').map(b => b.dataset.m), note: $('#tNote').value.trim() });
+  const read = () => ({ date: $('#tDate').value || today(), sym: $('#tSym').value.trim().toUpperCase(), side: $('#tSide .on').dataset.s, entry: num($('#tEntry').value), exit: num($('#tExit').value), stop: num($('#tStop').value), qty: num($('#tQty').value), fee: num($('#tFee').value) || 0, setup: $('#tSetup').value, emo: $('#tEmo .on')?.dataset.e || '', mist: $$('#tMist .on').map(b => b.dataset.m), note: $('#tNote').value.trim(), link: /^https?:\/\//.test($('#tLink').value.trim()) ? $('#tLink').value.trim() : '' });
   const prev = () => {
     const x = read();
     if (!x.entry || !x.qty) { $('#tPrev').innerHTML = '<span class="muted">Впиши вход и количество — посчитаю результат и R</span>'; return; }
@@ -429,7 +494,8 @@ function tradeForm(t) {
       if (x.stop && (x.side === 'long' ? x.stop >= x.entry : x.stop <= x.entry)) return toast(x.side === 'long' ? 'У лонга стоп ниже входа' : 'У шорта стоп выше входа');
       x.id = isNew ? uid() : t.id; S.lastSym = x.sym;
       S.trades = S.trades.filter(y => y.id !== x.id).concat(x); save(); d.close(); render();
-      toast(calc(x).closed ? `Записано: ${money(calc(x).pnl)}` : 'Открытая сделка записана');
+      const br = rulesBroken();
+      toast(br.length ? '⛔ Правила нарушены: ' + br[0] : calc(x).closed ? `Записано: ${money(calc(x).pnl)}` : 'Открытая сделка записана');
     }
     if (b.id === 'tDel' && confirm('Удалить сделку?')) { S.trades = S.trades.filter(y => y.id !== t.id); save(); d.close(); render(); }
   };
@@ -466,13 +532,25 @@ function render() {
 $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) { S.view = b.dataset.v; save(); render(); } };
 $('#addBtn').onclick = () => tradeForm();
 $('#app').onclick = e => {
-  const b = e.target.closest('[data-act],[data-res],[data-id],#cSide button'); if (!b) return;
+  if (e.target.closest('a')) return;
+  const b =e.target.closest('[data-act],[data-res],[data-id],#cSide button,[data-cm],[data-day],[data-mk],[data-dayx],[data-ckdel]'); if (!b) return;
+  if (b.dataset.cm) { const [y, m] = (S.calM || today().slice(0, 7)).split('-').map(Number), d = new Date(y, m - 1 + +b.dataset.cm, 1); S.calM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; save(); return render(); }
+  if (b.dataset.mk) { S.calM = b.dataset.mk; save(); return render(); }
+  if (b.dataset.day) { S.filter = { day: b.dataset.day }; S.view = 'trades'; save(); return render(); }
+  if (b.dataset.dayx != null) { S.filter = { ...S.filter, day: '' }; save(); return render(); }
+  if (b.dataset.ckdel) { e.preventDefault(); S.check = (S.check || DEF_CHECK).filter((_, i) => i !== +b.dataset.ckdel); save(); return render(); }
   if (b.dataset.act === 'add') tradeForm(); if (b.dataset.act === 'demo') demo();
   if (b.dataset.res != null) { S.filter = { ...S.filter, res: b.dataset.res }; save(); render(); }
   if (b.dataset.id) tradeForm(S.trades.find(t => t.id === b.dataset.id));
   if (b.closest('#cSide')) { $$('#cSide button').forEach(x => x.className = ''); b.className = 'on ' + (b.dataset.s === 'long' ? 'l' : 's'); calcUpdate(); }
 };
-$('#app').onchange = e => { if (e.target.id === 'fSym') { S.filter = { ...S.filter, sym: e.target.value }; save(); render(); } };
+$('#app').onchange = e => {
+  const id = e.target.id;
+  if (id === 'fSym') { S.filter = { ...S.filter, sym: e.target.value }; save(); render(); }
+  if (/^r(Dep|Loss|Tr|Row)$/.test(id)) { S.deposit = num($('#rDep').value) || S.deposit; S.rules = { maxLoss: num($('#rLoss').value) || 0, maxTrades: num($('#rTr').value) || 0, maxRow: num($('#rRow').value) || 0 }; save(); render(); toast('Правила сохранены'); }
+  if (e.target.dataset.ck != null) { const all = $$('.chk input'), n = all.filter(x => x.checked).length; $('#ckRes').innerHTML = n === all.length ? '<b class="up">✓ Все пункты выполнены — можно входить. Объём возьми из калькулятора.</b>' : `Отмечено ${n} из ${all.length}${n ? ' — не входи, пока не выполнены все' : ''}`; }
+};
+$('#app').addEventListener('submit', e => { if (e.target.id !== 'ckAdd') return; e.preventDefault(); const v = $('#ckNew').value.trim(); if (!v) return; S.check = (S.check || DEF_CHECK).concat(v); save(); render(); });
 document.addEventListener('click', e => { if (e.target.id === 'clrDemo') { S.trades = S.trades.filter(t => !t.demo); save(); render(); toast('Пример удалён'); } });
 $('#expBtn').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' })); a.download = 'tradelog-' + today() + '.json'; a.click(); };
 $('#csvBtn').onclick = () => {

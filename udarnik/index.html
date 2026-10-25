@@ -78,7 +78,7 @@ nav button.on { background: var(--ink); color: var(--paper); border-color: var(-
 .res-list span.ok { background: #e6f4ee; color: var(--green); }
 
 /* статистика */
-.boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; align-items: end; height: 170px; }
+.boxes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; align-items: end; height: 170px; }
 .boxes div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; font-size: 13px; color: var(--muted); text-align: center; }
 .boxes i { width: 100%; border-radius: 10px 10px 4px 4px; min-height: 4px; transition: height .6s cubic-bezier(.2,.8,.2,1); }
 .boxes b { color: var(--ink); font-size: 18px; }
@@ -115,6 +115,23 @@ nav button.on { background: var(--ink); color: var(--paper); border-color: var(-
 .ex-item em { font-style: normal; color: var(--red); }
 .ex-item small { margin-left: auto; font: 600 14px 'Golos Text'; }
 
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 5px 12px; font-weight: 700; font-size: 15px; color: var(--ink2); }
+.chip.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.mini { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; color: var(--ink2); margin-left: 6px; letter-spacing: 0; text-transform: none; }
+.dict .dw { cursor: pointer; border-radius: 8px; }
+.dict .dw:hover { background: rgba(29,43,83,.05); }
+.dict em { color: var(--gold); font-style: normal; font-size: 16px; }
+.bl-bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 0 auto 14px; max-width: 420px; }
+.bl-bar i { display: block; height: 100%; background: var(--green); transition: width .1s linear; }
+.set { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-size: 15px; }
+.set > span { color: var(--muted); font-weight: 600; }
+.cal { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 4px; overflow-x: auto; }
+.cal i { width: 100%; min-width: 14px; aspect-ratio: 1; border-radius: 4px; background: #ece4d3; }
+.cal i.l1 { background: #c5e3d3; } .cal i.l2 { background: #6cbf95; } .cal i.l3 { background: var(--green); }
+.ach { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.ach div { border: 1px dashed var(--line); border-radius: 14px; padding: 12px; opacity: .45; filter: grayscale(1); }
+.ach div.on { opacity: 1; filter: none; border-style: solid; background: #fff5df; }
+.ach i { font-style: normal; font-size: 26px; display: block; } .ach b { display: block; font-size: 15px; } .ach small { color: var(--muted); font-size: 13px; }
 .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--paper); padding: 12px 22px; border-radius: 12px; opacity: 0; transition: .3s; pointer-events: none; font-weight: 600; }
 .toast.on { opacity: 1; transform: translateX(-50%); }
 footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 30px; }
@@ -132,20 +149,21 @@ footer button { background: none; border: 0; color: var(--muted); text-decoratio
   <nav id="nav">
     <button data-v="train" class="on">Тренировка</button>
     <button data-v="exam">Как на ЕГЭ</button>
+    <button data-v="blitz">Блиц 60 сек</button>
     <button data-v="stats">Прогресс</button>
     <button data-v="dict">Словарь</button>
   </nav>
   <main id="app"></main>
-  <footer>Прогресс хранится в этом браузере · <button id="reset">Сбросить прогресс</button></footer>
+  <footer>Прогресс хранится в этом браузере · <button id="exp">Скачать копию</button> · <button id="imp">Загрузить копию</button> · <button id="reset">Сбросить прогресс</button><input type="file" id="impf" accept=".json" hidden></footer>
 </div>
 <div class="toast" id="toast"></div>
 <script>
 'use strict';
 // Орфоэпический минимум ФИПИ (задание 4). Заглавная буква — ударная гласная.
 const WORDS = {
-  'Существительные': 'аэропОрты бАнты бОроду бухгАлтеров вероисповЕдание граждАнство дефИс дешевИзна диспансЕр докумЕнт жалюзИ знАчимость Иксы каталОг квартАл киломЕтр кОнусы кОрысть крАны кремЕнь кремнЯ лЕкторов лыжнЯ мЕстностей намЕрение нарОст нЕдруг недУг некролОг ненАвистник нефтепровОд новостЕй нОгтя Отрочество партЕр портфЕль пОручни придАное призЫв сирОты созЫв сосредотОчение срЕдства стАтуя столЯр тамОжня тОрты тУфля цемЕнт цЕнтнер цепОчка шАрфы шОфер экспЕрт апострОф газопровОд мусоропровОд кладовАя локтЕй',
+  'Существительные': 'аэропОрты бАнты бОроду бухгАлтеров вероисповЕдание граждАнство дефИс дешевИзна диспансЕр договорЁнность докумЕнт жалюзИ знАчимость Иксы каталОг квартАл киломЕтр кОнусы кОрысть крАны кремЕнь кремнЯ лЕкторов лыжнЯ мЕстностей намЕрение нарОст нЕдруг недУг некролОг ненАвистник нефтепровОд новостЕй нОгтя Отрочество партЕр портфЕль пОручни придАное призЫв свЁкла сирОты созЫв сосредотОчение срЕдства стАтуя столЯр тамОжня тОрты тУфля цемЕнт цЕнтнер цепОчка шАрфы шофЁр щавЕль экспЕрт апострОф газопровОд мусоропровОд кладовАя локтЕй',
   'Прилагательные': 'вернА знАчимый красИвее красИвейший кУхонный ловкА мозаИчный оптОвый прозорлИвый прозорлИва слИвовый грУшевый',
-  'Глаголы': 'бралА бралАсь взялА взялАсь влилАсь ворвалАсь воспринЯть воссоздалА вручИт гналА гналАсь добралА добралАсь дождалАсь дозвонИтся дозИровать ждалА жилОсь закУпорить занЯть зАнял занялА зАняли заперлА запломбировАть защемИт звалА звонИт кАшлянуть клАла клЕить кралАсь кровоточИть лгалА лилА лилАсь наврАла наделИт надорвалАсь назвалАсь накренИтся налилА нарвалА начАть нАчал началА нАчали обзвонИт облегчИть облилАсь обнялАсь обогналА ободралА ободрИть ободрИшься обострИть одолжИт озлОбить оклЕить окружИт опОшлить освЕдомиться отбылА отдалА откУпорить отозвалА отозвалАсь перезвонИт перелилА плодоносИть пломбировАть повторИт позвалА позвонИт полилА положИл понЯть понялА послАла прибЫть прИбыл прибылА прИбыло принЯть прИнял принялА прИняли рвалА сверлИт снялА совралА создалА сорвалА сорИт убралА углубИть укрепИт черпнУть щемИт',
+  'Глаголы': 'бралА бралАсь взялА взялАсь влилАсь ворвалАсь воспринЯть воссоздалА вручИт включИт включИшь гналА гналАсь добралА добралАсь дождалАсь дозвонИтся дозИровать ждалА жилОсь закУпорить занЯть зАнял занялА зАняли заперлА запломбировАть защемИт звалА звонИт кАшлянуть клАла клЕить кралАсь кровоточИть лгалА лилА лилАсь наврАла наделИт надорвалАсь назвалАсь накренИтся налилА нарвалА начАть нАчал началА нАчали обзвонИт облегчИть облилАсь обнялАсь обогналА ободралА ободрИть ободрИшься обострИть одолжИт озлОбить оклЕить окружИт опОшлить освЕдомиться отбылА отдалА откУпорить отозвалА отозвалАсь перезвонИт перелилА плодоносИть пломбировАть повторИт позвалА позвонИт полилА положИл понЯть понялА послАла прибЫть прИбыл прибылА прИбыло принЯть прИнял принялА прИняли рвалА сверлИт снялА совралА создалА сорвалА сорИт убралА углубИть укрепИт черпнУть щемИт',
   'Причастия': 'зАгнутый зАнятый занятА зАпертый заселенА кровоточАщий нажИвший налИвший нанЯвшийся начАвший нАчатый прИнятый сОгнутый',
   'Деепричастия': 'закУпорив начАв отдАв поднЯв понЯв прибЫв создАв',
   'Наречия': 'вОвремя дОверху донЕльзя дОнизу дОсуха зАсветло зАтемно надОлго ненадОлго',
@@ -155,15 +173,52 @@ const LIST = Object.entries(WORDS).flatMap(([g, s]) => s.split(' ').map(raw => (
 const INTERVAL = [0, 1, 2, 4, 8, 16]; // дней до повтора по коробкам Лейтнера
 const GROUP_COLORS = { 'Существительные': '#1d2b53', 'Прилагательные': '#e3a32b', 'Глаголы': '#e2533f', 'Причастия': '#2a9d6a', 'Деепричастия': '#7a5cc4', 'Наречия': '#2f86c9' };
 const KEY = 'udarnik-v1';
+// Подсказки-запоминалки: сначала конкретные слова, потом правила по типу слова
+const MEMO = {
+  'каталОг': 'как диалОг, монолОг, некролОг', 'некролОг': 'как диалОг, каталОг', 'квартАл': 'от лат. quarta — «четверть»: квартАл = четверть года', 'жалюзИ': 'слово французское — ударение на последний слог, как «таксИ», «кафЕ»',
+  'партЕр': 'французское: ударение на последний слог, как шофЁр, жалюзИ', 'шофЁр': 'французское: на последний слог, как партЕр, жалюзИ', 'диспансЕр': 'как партЕр — французское, ударение в конце',
+  'докумЕнт': 'как момЕнт, цемЕнт', 'цемЕнт': 'как момЕнт, докумЕнт', 'экспЕрт': 'как концЕрт', 'портфЕль': 'как щавЕль, кремЕнь', 'щавЕль': 'как портфЕль', 'кУхонный': 'от слова кУхня', 'слИвовый': 'от слова слИва', 'грУшевый': 'от слова грУша',
+  'знАчимость': 'от слова знАк — ударение не прыгает', 'знАчимый': 'от слова знАк', 'красИвее': 'от красИвый — ударение остаётся на месте', 'красИвейший': 'от красИвый', 'мозаИчный': 'от мозаИка', 'оптОвый': 'как «оптОм»', 'столЯр': 'как малЯр', 'сирОты': 'сирОта — сирОты, ударение на месте', 'кремнЯ': 'кремЕнь → кремнЯ: ударение уходит на окончание', 'кремЕнь': 'кремЕнь — кремнЯ — кремнЁм', 'лыжнЯ': 'на конце, как ступнЯ',
+  'Иксы': 'икс — Иксы, как торт — тОрты', 'тОрты': 'торт — тОрты: во множественном ударение остаётся на основе', 'бАнты': 'бант — бАнты, ударение на основе', 'шАрфы': 'шарф — шАрфы, ударение на основе', 'крАны': 'кран — крАны, ударение на основе', 'кОнусы': 'кОнус — кОнусы', 'аэропОрты': 'порт — пОрты, аэропОрт — аэропОрты',
+  'лЕкторов': 'лЕктор — лЕкторов, ударение на основе', 'бухгАлтеров': 'бухгАлтер — бухгАлтеров, ударение на основе', 'новостЕй': 'как «костЕй», «гостЕй»', 'локтЕй': 'как новостЕй', 'вОвремя': 'вОвремя — как «вОт время»', 'дефИс': 'дефИс — как «девИз»', 'тамОжня': 'тамОжня — тамОженный', 'дешевИзна': 'как «белИзна», «новИзна»',
+  'клАла': 'исключение: в «класть» ударение всегда на основе — клАла', 'послАла': 'исключение: послАла, как «слАла»', 'наврАла': 'исключение: наврАла', 'клЕить': 'клЕй — клЕить, ударение на основе', 'оклЕить': 'клЕй — оклЕить', 'кАшлянуть': 'кАшель — кАшлянуть',
+  'зАнял': 'в мужском роде и мн. числе — на приставку или основу: зАнял, зАняли, но занялА', 'нАчал': 'нАчал, нАчали — но началА', 'прИнял': 'прИнял, прИняли — но принялА', 'прИбыл': 'прИбыл, прИбыло — но прибылА',
+};
+function memo(x) {
+  if (MEMO[x.raw]) return MEMO[x.raw];
+  const tail = x.w.slice(x.i), g = x.g;
+  if (g === 'Глаголы' && /^а(сь)?$/.test(tail)) return 'глагол прошедшего времени женского рода — ударение на окончание -лА: бралА, взялА, началА';
+  if (g === 'Глаголы' && /^и(т|шь|м|те)(ся)?$/.test(tail)) return 'ударение на окончании во всех формах: звонИт, звонИшь, звонИм';
+  if (/провод/.test(x.w)) return 'все «-провОд»: газопровОд, нефтепровОд, мусоропровОд';
+  if (g === 'Причастия' && /а$/.test(tail)) return 'краткое причастие женского рода — на окончание: занятА, заселенА';
+  if (g === 'Причастия') return 'полное причастие — ударение ближе к началу: зАнятый, прИнятый, нАчатый';
+  if (g === 'Деепричастия') return 'деепричастие держит ударение глагола: начАть — начАв, понЯть — понЯв';
+  if (g === 'Наречия' && x.i < 2) return 'ударение на приставку: дОверху, дОнизу, зАсветло';
+  return '';
+}
+const ACH = [
+  ['first', '🌱', 'Первая тренировка', s => Object.keys(s.cards).length > 0],
+  ['w50', '📗', '50 слов выучено', () => learned() >= 50],
+  ['w100', '📘', '100 слов выучено', () => learned() >= 100],
+  ['wall', '🏆', 'Весь минимум', () => learned() >= LIST.length],
+  ['s3', '🔥', '3 дня подряд', () => bestStreak() >= 3],
+  ['s7', '⚡', 'Неделя подряд', () => bestStreak() >= 7],
+  ['s30', '💎', '30 дней подряд', () => bestStreak() >= 30],
+  ['ex10', '🎯', '10 заданий ЕГЭ с баллом', s => s.exams.filter(Boolean).length >= 10],
+  ['bl15', '⏱', 'Блиц: 15 слов', s => blitzBest() >= 15],
+  ['bl25', '🚀', 'Блиц: 25 слов', s => blitzBest() >= 25],
+];
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const addD = (d, n) => { const x = new Date(d + 'T12:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
 const plural = (n, a, b, c) => { const m = Math.abs(n) % 100, k = m % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const stressed = (x, tag = 'u') => [...x.w].map((c, k) => k === x.i ? `<${tag}>${c.toUpperCase()}</${tag}>` : c).join('');
 
-function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.cards) return s; } catch (e) { } return { cards: {}, days: {}, view: 'train', exams: [] }; }
+const fresh0 = () => ({ cards: {}, days: {}, view: 'train', exams: [] });
+const norm = s => Object.assign({ size: 15, goal: 40, star: {}, blitz: [], ach: {} }, s);
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.cards) return norm(s); } catch (e) { } return norm(fresh0()); }
 let S = load();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
 const card = w => S.cards[w] || { box: 0, due: today(), seen: 0, err: 0 };
@@ -180,9 +235,13 @@ function answer(x, ok) {
 const learned = () => LIST.filter(x => card(x.raw).box >= 4).length;
 const dueList = () => LIST.filter(x => S.cards[x.raw] && card(x.raw).due <= today());
 function streak() { let n = 0, d = today(); if (!S.days[d]) d = addD(d, -1); while (S.days[d]) { n++; d = addD(d, -1); } return n; }
+function bestStreak() { const ds = Object.keys(S.days).sort(); let b = 0, c = 0, p = null; ds.forEach(d => { c = p && addD(p, 1) === d ? c + 1 : 1; b = Math.max(b, c); p = d; }); return b; }
+const blitzBest = () => Math.max(0, ...S.blitz.map(b => b.score));
+// новые достижения — тостом, один раз
+function checkAch() { ACH.forEach(([id, ic, t, f]) => { if (!S.ach[id] && f(S)) { S.ach[id] = today(); save(); setTimeout(() => toast(`${ic} Достижение: ${t}`), 400); } }); }
 
 // Подборка: сначала просроченные повторы, потом новые, потом слабые
-function pickSession(n = 15) {
+function pickSession(n = S.size) {
   const due = shuffle(dueList()).sort((a, b) => card(a.raw).box - card(b.raw).box);
   const fresh = shuffle(LIST.filter(x => !S.cards[x.raw]));
   const rest = shuffle(LIST.filter(x => S.cards[x.raw] && card(x.raw).due > today())).sort((a, b) => card(a.raw).box - card(b.raw).box);
@@ -198,12 +257,13 @@ function renderHd() {
   const l = learned(), td = S.days[today()] || { n: 0, ok: 0 };
   $('#hd').innerHTML = `${ring(l / LIST.length)}<div><b>${l} / ${LIST.length}</b><span>слов выучено</span></div><div class="sep"></div>
     <div><b>${streak()}🔥</b><span>${plural(streak(), 'день', 'дня', 'дней')} подряд</span></div><div class="sep"></div>
-    <div><b>${td.n ? Math.round(td.ok / td.n * 100) + '%' : '—'}</b><span>сегодня · ${td.n} ${plural(td.n, 'ответ', 'ответа', 'ответов')}</span></div>`;
+    <div><b>${td.n}/${S.goal}${td.n >= S.goal ? ' ✓' : ''}</b><span>цель на сегодня${td.n ? ' · ' + Math.round(td.ok / td.n * 100) + '% верно' : ''}</span></div>`;
+  checkAch();
 }
 
 // ---------- тренировка ----------
 let T = null;
-function startTrain() { T = { q: pickSession(), k: 0, res: [], combo: 0, locked: false }; drawQ(); }
+function startTrain(q) { T = { q: q || pickSession(), k: 0, res: [], combo: 0, locked: false }; if (!T.q.length) return toast('Тут пока нет слов'); drawQ(); }
 function drawQ() {
   if (T.k >= T.q.length) return drawResult();
   const x = T.q[T.k], c = S.cards[x.raw];
@@ -229,7 +289,8 @@ function pick(i) {
   } else {
     btn.classList.add('bad'); w.classList.add('shake'); T.combo = 0;
     const r = w.querySelector(`[data-i="${x.i}"]`); r.classList.add('right'); r.textContent = r.textContent.toUpperCase();
-    $('#fb').innerHTML = `<div class="err">Не так. Запомни:</div><div class="memo">${stressed(x)}</div><div class="btns" style="margin-top:12px"><button class="btn" id="nextBtn">Дальше →</button></div><div class="kbd">или Enter / пробел · слово вернётся в этой же тренировке</div>`;
+    const m = memo(x);
+    $('#fb').innerHTML = `<div class="err">Не так. Запомни:</div><div class="memo">${stressed(x)}</div>${m ? `<div class="tip">💡 ${m}</div>` : ''}<div class="btns" style="margin-top:12px"><button class="btn" id="nextBtn">Дальше →</button></div><div class="kbd">или Enter / пробел · слово вернётся в этой же тренировке</div>`;
     T.q.push(x); // ошибку повторим в конце
   }
 }
@@ -243,7 +304,56 @@ function drawResult() {
     <div class="res-big">${ok} / ${n}</div>
     <div class="hint" style="margin-top:8px">${ok === n ? 'Без единой ошибки 🎉' : ok / n >= .8 ? 'Хороший результат — ошибки вернутся в повторении' : 'Ошибки — это нормально: эти слова будут попадаться чаще, пока не запомнишь'}</div>
     <div class="res-list">${words.map(({ x, r }) => `<span class="${r ? 'ok' : ''}">${stressed(x, 'b')}</span>`).join('')}</div>
-    <div class="btns"><button class="btn" data-act="again">Ещё 15 слов</button><button class="btn ghost" data-act="stats">Мой прогресс</button></div></div>`;
+    <div class="btns">${ok < n ? `<button class="btn red" data-act="redo">Ещё раз ошибки (${n - ok})</button>` : ''}<button class="btn" data-act="again">Ещё ${S.size} ${plural(S.size, 'слово', 'слова', 'слов')}</button><button class="btn ghost" data-act="stats">Мой прогресс</button></div>
+    <div class="kbd">Слов за тренировку: ${sizeSeg()}</div></div>`;
+  T.wrong = words.filter(w => !w.r).map(w => w.x);
+  renderHd();
+}
+const sizeSeg = () => [10, 15, 25, 40].map(n => `<button class="chip ${S.size === n ? 'on' : ''}" data-size="${n}">${n}</button>`).join(' ');
+
+// ---------- блиц: 60 секунд, сколько успеешь ----------
+let B = null;
+function drawBlitzStart() {
+  const best = blitzBest(), last = S.blitz.slice(-5).reverse();
+  $('#app').innerHTML = `<div class="card train"><div class="res-big">60<small style="font-size:28px"> сек</small></div>
+    <div class="hint" style="margin:12px 0 22px">Ставь ударения на скорость. Ошибка — минус 3 секунды.<br>Цифры на клавиатуре тоже работают.</div>
+    <div class="btns"><button class="btn" data-act="blitzGo">Старт</button></div>
+    <div class="kbd" style="font-size:15px">${best ? `Рекорд: <b style="color:var(--ink)">${best}</b> · последние: ${last.map(b => b.score).join(', ')}` : 'Рекорда пока нет — поставь первый'}</div></div>`;
+}
+function blitzGo() {
+  B = { q: shuffle(LIST), k: 0, score: 0, wrong: [], end: Date.now() + 60000, locked: false };
+  drawBlitzQ(); B.tm = setInterval(blitzTick, 100);
+}
+function blitzTick() {
+  const left = Math.max(0, B.end - Date.now()), el = $('#bt');
+  if (!el) { clearInterval(B.tm); return; }
+  el.textContent = (left / 1000).toFixed(1); $('#bbar').style.width = left / 600 + '%';
+  if (!left) { clearInterval(B.tm); blitzEnd(); }
+}
+function drawBlitzQ() {
+  const x = B.q[B.k % B.q.length];
+  $('#app').innerHTML = `<div class="card train"><div class="combo" style="color:var(--ink)">${B.score} ✓</div>
+    <div class="bl-bar"><i id="bbar"></i></div><div class="res-big" id="bt" style="font-size:44px;margin-bottom:24px">60.0</div>
+    <div class="word" id="word">${[...x.w].map((ch, i) => VOW.includes(ch) ? `<button data-b="${i}">${ch}</button>` : `<span>${ch}</span>`).join('')}</div><div class="fb" id="fb"></div></div>`;
+  blitzTick();
+}
+function blitzPick(i) {
+  if (B.locked) return;
+  const x = B.q[B.k % B.q.length], ok = i === x.i, w = $('#word');
+  answer(x, ok); B.locked = true;
+  if (ok) { B.score++; B.k++; B.locked = false; return drawBlitzQ(); }
+  B.wrong.push(x); B.end -= 3000; w.classList.add('locked', 'shake');
+  w.querySelector(`[data-b="${i}"]`).classList.add('bad');
+  const r = w.querySelector(`[data-b="${x.i}"]`); r.classList.add('right'); r.textContent = r.textContent.toUpperCase();
+  setTimeout(() => { if (!B.done) { B.k++; B.locked = false; drawBlitzQ(); } }, 900);
+}
+function blitzEnd() {
+  B.done = true; const prev = blitzBest();
+  S.blitz.push({ d: today(), score: B.score }); save();
+  $('#app').innerHTML = `<div class="card train"><div class="hint">Время вышло</div><div class="res-big">${B.score}</div>
+    <div class="hint" style="margin-top:8px">${B.score > prev ? (prev ? `Новый рекорд! Было ${prev} 🎉` : 'Первый рекорд поставлен 🎉') : `Рекорд — ${prev}. ${prev - B.score <= 2 ? 'Совсем близко!' : 'Ещё попытка?'}`}</div>
+    ${B.wrong.length ? `<div class="res-list">${B.wrong.map(x => `<span>${stressed(x, 'b')}</span>`).join('')}</div>` : '<div class="hint">Ни одной ошибки</div>'}
+    <div class="btns"><button class="btn" data-act="blitzGo">Ещё раз</button>${B.wrong.length ? `<button class="btn ghost" data-act="blitzWrong">Потренировать ошибки</button>` : ''}</div></div>`;
   renderHd();
 }
 
@@ -298,33 +408,61 @@ function drawStats() {
       <div class="boxes">${[['Не начаты', fresh, '#d9d0bd'], ...boxes.map((n, b) => [b === 0 ? 'Ошибка' : b === 5 ? 'Навсегда' : 'Уровень ' + b, n, ['#e2533f', '#e3a32b', '#d6b83a', '#8fbf5a', '#2a9d6a', '#1d2b53'][b]])].map(([t, n, c]) => `<div><b>${n}</b><i style="height:${n / mx * 100}%;background:${c}"></i>${t}</div>`).join('')}</div></div>
     <div class="card s5"><div class="ct">По частям речи</div><div class="groups">${groups.map(g => `<div class="grp"><span>${g.g}</span><div class="tr"><i style="width:${g.l / g.n * 100}%;background:${GROUP_COLORS[g.g]}"></i><i style="width:${g.s / g.n * 100}%;background:${GROUP_COLORS[g.g]};opacity:.3"></i></div><b>${g.l}/${g.n}</b></div>`).join('')}</div></div>
     <div class="card s12"><div class="ct">Слова-ловушки <span>в которых ты ошибался чаще всего</span></div>${hard.length ? `<div class="hard">${hard.map(x => `<span>${stressed(x, 'b')}<small>×${card(x.raw).err}</small></span>`).join('')}</div><div class="btns" style="justify-content:flex-start;margin-top:16px"><button class="btn red" data-act="hard">Прогнать только ловушки</button></div>` : '<div style="color:var(--muted)">Ошибок пока нет</div>'}</div>
+    <div class="card s8"><div class="ct">Календарь занятий <span>${Object.keys(S.days).length} ${plural(Object.keys(S.days).length, 'день', 'дня', 'дней')} с тренировкой · лучшая серия ${bestStreak()}</span></div>${calendar()}</div>
+    <div class="card s4"><div class="ct">Настройки</div>
+      <div class="set"><span>Слов за тренировку</span><div>${sizeSeg()}</div></div>
+      <div class="set"><span>Цель ответов в день</span><div>${[20, 40, 60, 100].map(n => `<button class="chip ${S.goal === n ? 'on' : ''}" data-goal="${n}">${n}</button>`).join(' ')}</div></div>
+      <div class="set"><span>Дней до ЕГЭ</span><div><b>${daysToExam()}</b> — ${daysToExam() > Math.ceil(fresh / S.size) + 16 ? 'успеваешь с запасом' : 'пора ускоряться: подними число слов'}</div></div></div>
+    <div class="card s12"><div class="ct">Достижения <span>${Object.keys(S.ach).length} из ${ACH.length}</span></div><div class="ach">${ACH.map(([id, ic, t]) => `<div class="${S.ach[id] ? 'on' : ''}"><i>${ic}</i><b>${t}</b><small>${S.ach[id] ? new Date(S.ach[id] + 'T12:00').toLocaleDateString('ru') : 'ещё впереди'}</small></div>`).join('')}</div></div>
   </div>`;
+}
+// русский язык ЕГЭ — обычно конец мая/начало июня; берём 1 июня ближайшего года
+function daysToExam() { const t = new Date(today()), y = t.getMonth() > 5 ? t.getFullYear() + 1 : t.getFullYear(); return Math.max(0, Math.round((new Date(y + '-06-01') - t) / 864e5)); }
+function calendar() {
+  const end = today(), start = addD(end, -7 * 17 - ((new Date(end + 'T12:00').getDay() + 6) % 7));
+  let h = '', d = start;
+  while (d <= end) { const x = S.days[d], lv = !x ? 0 : x.n >= S.goal ? 3 : x.n >= S.goal / 2 ? 2 : 1; h += `<i class="l${lv}" title="${new Date(d + 'T12:00').toLocaleDateString('ru')}: ${x ? x.n + ' ответов' : 'нет занятий'}"></i>`; d = addD(d, 1); }
+  return `<div class="cal">${h}</div><div class="hint" style="text-align:left;margin:10px 0 0">светлее — меньше половины цели, темнее — цель выполнена</div>`;
 }
 
 // ---------- словарь ----------
 function drawDict(q = '') {
   const f = q.trim().toLowerCase().replace(/ё/g, 'е');
   const col = x => { const c = S.cards[x.raw]; return !c ? '#d9d0bd' : c.box >= 4 ? '#2a9d6a' : c.box === 0 && c.err ? '#e2533f' : '#e3a32b'; };
-  const body = Object.keys(WORDS).map(g => { const ws = LIST.filter(x => x.g === g && (!f || x.w.replace(/ё/g, 'е').includes(f))).sort((a, b) => a.w.localeCompare(b.w, 'ru')); return ws.length ? `<h4>${g}</h4>${ws.map(x => `<div><i class="dot" style="background:${col(x)}"></i>${stressed(x)}</div>`).join('')}` : ''; }).join('');
-  if (!$('#dq')) $('#app').innerHTML = `<div class="card"><input class="search" id="dq" placeholder="Найти слово… (${LIST.length} в минимуме)" autocomplete="off"><div class="hint" style="text-align:left">● выучено &nbsp; ● в процессе &nbsp; ● последняя попытка с ошибкой &nbsp; ● не начато</div><div class="dict" id="dl"></div></div>`;
+  const body = Object.keys(WORDS).map(g => { const ws = LIST.filter(x => x.g === g && (!f || x.w.replace(/ё/g, 'е').includes(f))).sort((a, b) => a.w.localeCompare(b.w, 'ru')); return ws.length ? `<h4>${g} <button class="mini" data-grp="${g}">тренировать</button></h4>${ws.map(x => `<div class="dw" data-star="${x.raw}" title="${memo(x)}"><i class="dot" style="background:${col(x)}"></i>${stressed(x)}${S.star[x.raw] ? '<em>★</em>' : ''}</div>`).join('')}` : ''; }).join('');
+  const ns = Object.keys(S.star).length;
+  if (!$('#dq')) $('#app').innerHTML = `<div class="card"><input class="search" id="dq" placeholder="Найти слово… (${LIST.length} в минимуме)" autocomplete="off"><div class="hint" style="text-align:left">● выучено &nbsp; ● в процессе &nbsp; ● последняя попытка с ошибкой &nbsp; ● не начато &nbsp;·&nbsp; нажми на слово — ★ в «мой список»</div><div id="stb"></div><div class="dict" id="dl"></div></div>`;
+  $('#stb').innerHTML = ns ? `<div class="btns" style="justify-content:flex-start;margin:0 0 8px"><button class="btn" data-act="starTrain">Тренировать мой список (${ns})</button><button class="btn ghost" data-act="starClear">Очистить список</button></div>` : '';
   $('#dl').innerHTML = body || '<div style="color:var(--muted)">Такого слова в минимуме нет</div>';
 }
+function goTrain(q) { S.view = 'train'; save(); $$('#nav button').forEach(x => x.classList.toggle('on', x.dataset.v === 'train')); startTrain(shuffle(q)); }
 
 // ---------- навигация ----------
 function render() {
   const v = S.view || 'train';
   $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
-  if (v === 'train') startTrain(); if (v === 'exam') startExam(); if (v === 'stats') drawStats(); if (v === 'dict') { $('#app').innerHTML = ''; drawDict(); }
+  if (B) { clearInterval(B.tm); B.done = true; }
+  if (v === 'train') startTrain(); if (v === 'exam') startExam(); if (v === 'blitz') drawBlitzStart(); if (v === 'stats') drawStats(); if (v === 'dict') { $('#app').innerHTML = ''; drawDict(); }
   renderHd();
 }
 $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if (b) { S.view = b.dataset.v; save(); render(); } };
 $('#app').addEventListener('click', e => {
+  const st = e.target.closest('[data-star]');
+  if (st) { const w = st.dataset.star; S.star[w] ? delete S.star[w] : S.star[w] = 1; save(); drawDict($('#dq').value); return; }
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.i != null) pick(+b.dataset.i);
+  if (b.dataset.b != null) blitzPick(+b.dataset.b);
   if (b.id === 'nextBtn') next();
   if (b.dataset.act === 'again') startTrain();
-  if (b.dataset.act === 'stats') { S.view = 'stats'; save(); render(); }
-  if (b.dataset.act === 'hard') { S.view = 'train'; save(); $$('#nav button').forEach(x => x.classList.toggle('on', x.dataset.v === 'train')); const h = LIST.filter(x => card(x.raw).err).sort((a, b) => card(b.raw).err - card(a.raw).err).slice(0, 15); T = { q: shuffle(h), k: 0, res: [], combo: 0, locked: false }; drawQ(); }
+  if (b.dataset.act === 'redo') startTrain(shuffle(T.wrong));
+  if (b.dataset.size) { S.size = +b.dataset.size; save(); S.view === 'stats' ? drawStats() : drawResult(); }
+  if (b.dataset.goal) { S.goal = +b.dataset.goal; save(); drawStats(); renderHd(); }
+  if (b.dataset.act === 'blitzGo') blitzGo();
+  if (b.dataset.act === 'blitzWrong') goTrain(B.wrong.filter((x, i, a) => a.indexOf(x) === i));
+  if (b.dataset.grp) goTrain(LIST.filter(x => x.g === b.dataset.grp).sort((a, c) => card(a.raw).box - card(c.raw).box).slice(0, 25));
+  if (b.dataset.act === 'starTrain') goTrain(LIST.filter(x => S.star[x.raw]));
+  if (b.dataset.act === 'starClear' && confirm('Очистить мой список?')) { S.star = {}; save(); drawDict($('#dq').value); }
+  if (b.dataset.act === 'hard') goTrain(LIST.filter(x => card(x.raw).err).sort((a, b) => card(b.raw).err - card(a.raw).err).slice(0, 15));
   if (b.dataset.ex != null && !E.done) { const k = +b.dataset.ex; E.sel.has(k) ? E.sel.delete(k) : E.sel.add(k); drawExam(); }
   if (b.dataset.act === 'check') checkExam();
   if (b.dataset.act === 'exam') startExam();
@@ -332,9 +470,12 @@ $('#app').addEventListener('click', e => {
 $('#app').addEventListener('input', e => { if (e.target.id === 'dq') drawDict(e.target.value); });
 document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && $('#nextBtn')) { e.preventDefault(); next(); }
-  if (S.view === 'train' && T && !T.locked && /^[1-9]$/.test(e.key)) { const bs = $$('#word button'); const b = bs[+e.key - 1]; if (b) pick(+b.dataset.i); }
+  if (/^[1-9]$/.test(e.key) && $('#word') && !$('#word').classList.contains('locked')) { const b = $$('#word button')[+e.key - 1]; if (!b) return; if (b.dataset.b != null) blitzPick(+b.dataset.b); else if (T && !T.locked) pick(+b.dataset.i); }
 });
-$('#reset').onclick = () => { if (confirm('Сбросить весь прогресс?')) { S = { cards: {}, days: {}, view: 'train', exams: [] }; save(); render(); toast('Прогресс сброшен'); } };
+$('#reset').onclick = () => { if (confirm('Сбросить весь прогресс?')) { S = norm(fresh0()); save(); render(); toast('Прогресс сброшен'); } };
+$('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' })); a.download = `udarnik-${today()}.json`; a.click(); toast('Копия скачана'); };
+$('#imp').onclick = () => $('#impf').click();
+$('#impf').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const s = JSON.parse(t); if (!s.cards) throw 0; S = norm(s); save(); render(); toast('Прогресс загружен'); } catch (er) { toast('Это не файл Ударника'); } }); e.target.value = ''; };
 render();
 </script>
 </body>

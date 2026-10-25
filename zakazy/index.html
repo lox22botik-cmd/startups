@@ -122,10 +122,31 @@ dialog[open] { animation: in .25s; }
 .df .sp { flex: 1; }
 .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 12px; opacity: 0; transition: .3s; pointer-events: none; font-weight: 600; z-index: 10; }
 .toast.on { opacity: 1; transform: translateX(-50%); }
+.gbar { height: 6px; border-radius: 3px; background: var(--bg); overflow: hidden; margin-top: 6px; }
+.gbar i { display: block; height: 100%; background: var(--ok); }
+.filt { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.filt input[type=text], .filt #fq { flex: 1; min-width: 200px; }
+.filt input, .filt select { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font: inherit; color: var(--ink); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 7px 12px; font-weight: 600; font-size: 14px; color: var(--ink2); }
+.chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.mst { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.mst b { display: block; font: 700 22px var(--mono); }
+.mst span { font-size: 13px; color: var(--muted); }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+nav { scrollbar-width: none; } nav::-webkit-scrollbar { display: none; }
+.cw { font-size: 13px; color: var(--muted); font-weight: 600; text-align: center; }
+.cd { min-height: 86px; border: 1px solid var(--line); border-radius: 12px; padding: 6px; background: var(--card); display: flex; flex-direction: column; gap: 4px; }
+.cd > span { font: 600 13px var(--mono); color: var(--ink2); }
+.cd.now { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.cd.past { opacity: .5; }
+.calo { font-size: 12px; font-weight: 600; background: var(--bg); border-left: 3px solid var(--ink); border-radius: 6px; padding: 3px 6px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addt { display: flex; gap: 8px; margin: 6px 0; } .addt input { width: 90px; }
+button.tg { border: 0; cursor: pointer; font-family: inherit; }
 footer { color: var(--muted); font-size: 13px; text-align: center; margin-top: 30px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 footer button { background: none; border: 0; color: var(--muted); text-decoration: underline; }
 @media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, 1fr); } .s4, .s5, .s6, .s7, .s8 { grid-column: span 12; } .vars { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 700px) { .board { grid-template-columns: 1fr; } .oc .mv { display: flex; } .fg { grid-template-columns: repeat(2, 1fr); } .fg .w4 { grid-column: span 2; } .timer-hd { margin-left: 0; width: 100%; } .wrap { padding: 0 14px 40px; } }
+@media (max-width: 700px) { .mst { grid-template-columns: 1fr; } .cd { min-height: 64px; padding: 4px; } .calo { font-size: 10px; } .board { grid-template-columns: 1fr; } .oc .mv { display: flex; } .fg { grid-template-columns: repeat(2, 1fr); } .fg .w4 { grid-column: span 2; } .timer-hd { margin-left: 0; width: 100%; } .wrap { padding: 0 14px 40px; } }
 </style>
 </head>
 <body>
@@ -138,6 +159,7 @@ footer button { background: none; border: 0; color: var(--muted); text-decoratio
   <nav id="nav">
     <button data-v="board" class="on">Доска</button>
     <button data-v="money">Деньги</button>
+    <button data-v="cal">Календарь</button>
     <button data-v="clients">Клиенты</button>
     <button data-v="tpl">Шаблоны откликов</button>
     <button class="add" id="addBtn">+ Заказ</button>
@@ -161,7 +183,7 @@ const DEF_TPL = [
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const rub = v => Math.round(v || 0).toLocaleString('ru-RU') + ' ₽';
 const plural = (n, a, b, c) => { const m = Math.abs(n) % 100, k = m % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
 const days = (a, b) => Math.round((new Date(b + 'T12:00') - new Date(a + 'T12:00')) / 864e5);
@@ -211,8 +233,9 @@ function kpis() {
   const unpaid = done.filter(o => !o.paid).reduce((s, o) => s + net(o), 0);
   const hrs = done.reduce((s, o) => s + spent(o), 0) / 36e5, earned = done.filter(o => spent(o) > 0).reduce((s, o) => s + net(o), 0);
   const soon = S.orders.filter(o => o.col !== 'done' && o.deadline && days(today(), o.deadline) <= 2).length;
+  const g = S.goal || 0;
   return `<div class="kpis">
-    <div class="kpi"><span>Заработано в этом месяце</span><b>${rub(month)}</b><small>после комиссий площадок</small></div>
+    <div class="kpi"><span>Заработано в этом месяце</span><b>${rub(month)}</b>${g ? `<div class="gbar"><i style="width:${Math.min(100, month / g * 100)}%"></i></div><small>${month >= g ? 'цель выполнена 🎉' : 'цель ' + rub(g) + ' · осталось ' + rub(g - month)}</small>` : '<small>после комиссий площадок</small>'}</div>
     <div class="kpi"><span>В работе на сумму</span><b>${rub(pipe)}</b><small>${S.orders.filter(o => o.col !== 'done').length} ${plural(S.orders.filter(o => o.col !== 'done').length, 'заказ', 'заказа', 'заказов')}</small></div>
     <div class="kpi"><span>Ждёт оплаты</span><b style="color:${unpaid ? 'var(--warn)' : ''}">${rub(unpaid)}</b><small>сдано, но не оплачено</small></div>
     <div class="kpi"><span>Средний доход в час</span><b>${hrs > 0.1 ? rub(earned / hrs) : '—'}</b><small>${hrs > 0.1 ? 'по ' + Math.round(hrs) + ' ч на сданных' : 'включай таймер на заказах'}</small></div>
@@ -221,13 +244,13 @@ function kpis() {
 
 // ---------- экраны ----------
 const V = {};
-V.board = () => kpis() + `<div class="board">${COLS.map(([k, n, c], ci) => {
+V.board = () => kpis() + `<div class="filt"><input id="fq" placeholder="🔍 Поиск по заказам и клиентам" autocomplete="off"><select id="fp"><option value="">Все площадки</option>${PLATS.map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select><label class="ck"><input type="checkbox" id="fh"> только горящие</label></div><div class="board">${COLS.map(([k, n, c], ci) => {
   const list = S.orders.filter(o => o.col === k).sort((a, b) => (a.deadline || '9').localeCompare(b.deadline || '9'));
   return `<div class="col" data-col="${k}"><h3><i style="background:${c}"></i>${n} <span>${list.length}</span><em>${list.length ? rub(list.reduce((s, o) => s + net(o), 0)) : ''}</em></h3>
-    ${list.map(o => { const ch = o.checks || [], cd = ch.filter(x => x.d).length, run = S.timer?.id === o.id; return `<div class="oc" draggable="true" data-id="${o.id}">
+    ${list.map(o => { const ch = o.checks || [], cd = ch.filter(x => x.d).length, run = S.timer?.id === o.id; return `<div class="oc" draggable="true" data-id="${o.id}" data-s="${esc((o.title + ' ' + (o.client || '')).toLowerCase())}" data-p="${o.plat}" data-h="${o.col !== 'done' && o.deadline && days(today(), o.deadline) <= 2 ? 1 : ''}">
       ${k !== 'done' ? `<button class="play ${run ? 'run' : ''}" data-timer="${o.id}" title="${run ? 'Остановить' : 'Засечь время'}">${run ? '■' : '▶'}</button>` : ''}
       <div class="tt">${esc(o.title)}</div><div class="cl">${esc(o.client || 'без клиента')} · ${PLATS.find(p => p[0] === o.plat)?.[1] || ''}</div>
-      <div class="row"><span class="price">${rub(net(o))}</span>${dl(o)}${k === 'done' ? `<span class="tg ${o.paid ? 'paid' : 'soon'}">${o.paid ? 'оплачено' : 'ждёт оплаты'}</span>` : ''}${spent(o) ? `<span class="tg" data-spent="${o.id}">${hm(spent(o))}</span>` : ''}</div>
+      <div class="row"><span class="price">${rub(net(o))}</span>${dl(o)}${k === 'done' ? (o.paid ? '<span class="tg paid">оплачено</span>' : `<button class="tg soon" data-paid="${o.id}" title="Нажми, когда деньги придут">ждёт оплаты · отметить</button>`) : ''}${spent(o) ? `<span class="tg" data-spent="${o.id}">${hm(spent(o))}</span>` : ''}</div>
       ${ch.length ? `<div class="bar"><i style="width:${cd / ch.length * 100}%"></i></div>` : ''}
       <div class="mv">${ci > 0 ? `<button data-mv="${o.id}|${COLS[ci - 1][0]}">← ${COLS[ci - 1][1]}</button>` : ''}${ci < 3 ? `<button data-mv="${o.id}|${COLS[ci + 1][0]}">${COLS[ci + 1][1]} →</button>` : ''}</div></div>`; }).join('') || `<div class="colempty">${ci === 0 ? 'Новые заказы и отклики' : 'Перетащи карточку сюда'}</div>`}</div>`;
 }).join('')}</div>`;
@@ -244,17 +267,44 @@ V.money = () => {
     <div class="card s8"><div class="ct">Доход по месяцам <span>сданные заказы, после комиссий</span></div><div class="mbars">${ms.map(m => `<div><b>${m.v ? rub(m.v) : ''}</b><i style="height:${m.v / mx * 100}%"></i>${m.n}</div>`).join('')}</div></div>
     <div class="card s4 verdict"><div class="ct">Вывод</div>${!done.length ? 'Сдай первый заказ — здесь появится разбор: сколько зарабатываешь, где выгоднее и какие заказы стоит брать.' :
       `Всего заработано <b>${rub(total)}</b>. ${prev ? `Этот месяц ${cur >= prev ? 'лучше' : 'слабее'} прошлого на <b>${Math.abs(Math.round((cur / prev - 1) * 100))}%</b>.` : ''} ${feeAll ? `Комиссии площадок забрали <b>${rub(feeAll)}</b> — постоянных клиентов выгодно переводить на прямую работу.` : ''} ${hourly.length >= 2 ? `Самый выгодный заказ — «${esc(hourly[0].o.title)}» (${rub(hourly[0].h)}/ч), самый невыгодный — «${esc(hourly[hourly.length - 1].o.title)}» (${rub(hourly[hourly.length - 1].h)}/ч).` : ''}`}</div>
+    <div class="card s6"><div class="ct">Самозанятость · налог НПД</div>${taxCard()}</div>
+    <div class="card s6"><div class="ct">Цель на месяц</div>
+      <div class="f">Сколько хочу зарабатывать в месяц, ₽<input id="goalIn" inputmode="numeric" value="${S.goal || ''}" placeholder="например 30000"></div>
+      ${S.goal ? (() => { const left = S.goal - cur, dl = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate() + 1, avg = done.filter(o => o.doneAt && days(o.doneAt, today()) < 90).map(net); const a = avg.length ? avg.reduce((s, v) => s + v, 0) / avg.length : 0; return `<p class="verdict" style="margin-top:12px">${left <= 0 ? `Цель месяца выполнена: <b>${rub(cur)}</b> из ${rub(S.goal)} 🎉` : `Осталось <b>${rub(left)}</b> за ${dl} ${plural(dl, 'день', 'дня', 'дней')} — это <b>${rub(left / dl)}</b> в день.${a ? ` При среднем чеке ${rub(a)} нужно сдать ещё <b>${Math.ceil(left / a)}</b> ${plural(Math.ceil(left / a), 'заказ', 'заказа', 'заказов')}.` : ''}`}</p>`; })() : '<p style="color:var(--muted);margin-top:10px">Поставь цель — в «Заработано в этом месяце» появится прогресс, а тут — сколько заказов осталось сдать.</p>'}</div>
     <div class="card s5"><div class="ct">Площадки</div>${byPlat.length ? `<div class="plat">${byPlat.map(p => `<div><span>${p.n}</span><div class="tr"><i style="width:${p.v / pmx * 100}%"></i></div><b>${rub(p.v)}</b></div>`).join('')}</div>` : '<div style="color:var(--muted)">Нет сданных заказов</div>'}</div>
     <div class="card s7"><div class="ct">Доход в час по заказам <span>сколько реально стоил твой час</span></div>${hourly.length ? `<table class="tbl"><tr><th>Заказ</th><th class="n">Время</th><th class="n">Получено</th><th class="n">₽ / час</th></tr>${hourly.slice(0, 8).map(x => `<tr><td>${esc(x.o.title)}</td><td class="n">${hm(spent(x.o))}</td><td class="n">${rub(net(x.o))}</td><td class="n"><b>${rub(x.h)}</b></td></tr>`).join('')}</table>` : '<div style="color:var(--muted)">Засекай время кнопкой ▶ на карточке — появится реальная цена часа</div>'}</div>
   </div>`;
 };
 
+// НПД: налог с полученных денег; платить до 28 числа следующего месяца; лимит 2,4 млн ₽ в год
+function taxCard() {
+  const r = S.tax ?? 4, paidIn = k => S.orders.filter(o => o.col === 'done' && o.paid && (o.paidAt || o.doneAt || '').startsWith(k)).reduce((s, o) => s + net(o), 0);
+  const d = new Date(), mk = today().slice(0, 7), pd = new Date(d.getFullYear(), d.getMonth() - 1, 1), pk = `${pd.getFullYear()}-${String(pd.getMonth() + 1).padStart(2, '0')}`;
+  const cur = paidIn(mk), prev = paidIn(pk), year = paidIn(String(d.getFullYear()));
+  const seg = [[4, '4% · физлица'], [6, '6% · компании'], [0, 'не самозанятый']].map(([v, t]) => `<button class="chip ${r === v ? 'on' : ''}" data-tax="${v}">${t}</button>`).join('');
+  if (!r) return `<div class="chips">${seg}</div><p style="color:var(--muted);margin-top:12px">Оформить самозанятость можно в приложении «Мой налог» за 10 минут: налог 4% с оплат от людей, 6% — от компаний, без отчётов.</p>`;
+  const due = new Date(d.getFullYear(), d.getMonth() + 1, 28).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  return `<div class="chips">${seg}</div><div class="mst" style="margin-top:14px">
+    <div><b>${rub(cur * r / 100)}</b><span>налог за этот месяц · с ${rub(cur)}<br>заплатить до ${due}</span></div>
+    <div><b>${rub(prev * r / 100)}</b><span>за прошлый месяц · с ${rub(prev)}<br>срок — до 28 числа этого</span></div>
+    <div><b>${Math.round(year / 24000)}%</b><span>годового лимита 2,4 млн ₽ · ${rub(year)}</span></div></div>
+    <p style="color:var(--muted);margin-top:10px;font-size:14px">Считаю по оплаченным заказам. Пока не потрачен налоговый вычет 10 000 ₽, «Мой налог» берёт меньше: 3% вместо 4% и 4% вместо 6%. Чек выбивай на каждую оплату — кнопка 🧾 в заказе.</p>`;
+}
+V.cal = () => {
+  const act = S.orders.filter(o => o.col !== 'done' && o.deadline), t = today(), late = act.filter(o => o.deadline < t);
+  const w0 = new Date(t + 'T12:00'); w0.setDate(w0.getDate() - (w0.getDay() + 6) % 7);
+  const cells = [...Array(35)].map((_, i) => { const x = new Date(w0); x.setDate(x.getDate() + i); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); const k = x.toISOString().slice(0, 10); return { k, n: +k.slice(8), os: act.filter(o => o.deadline === k) }; });
+  return `${late.length ? `<div class="card" style="margin-bottom:14px;border-color:var(--bad)"><b style="color:var(--bad)">Просрочено: ${late.length}</b> — ${late.map(o => `<span class="calo" data-open="${o.id}">${esc(o.title)} (${fdate(o.deadline)})</span>`).join(' ')}</div>` : ''}
+  <div class="card"><div class="ct">Дедлайны на 5 недель <span>${act.length ? act.length + ' ' + plural(act.length, 'заказ', 'заказа', 'заказов') + ' с датой сдачи' : 'у заказов нет дедлайнов — укажи их в карточке'}</span></div>
+    <div class="cal">${['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map(d => `<div class="cw">${d}</div>`).join('')}${cells.map(c => `<div class="cd ${c.k === t ? 'now' : ''} ${c.k < t ? 'past' : ''}"><span>${c.n}${c.n === 1 ? ' ' + new Date(c.k + 'T12:00').toLocaleDateString('ru-RU', { month: 'short' }) : ''}</span>${c.os.map(o => `<div class="calo" data-open="${o.id}" style="border-color:${COLS.find(x => x[0] === o.col)[2]}">${esc(o.title)}</div>`).join('')}</div>`).join('')}</div>
+    ${(() => { const busy = cells.filter(c => c.k >= t && c.os.length > 1); return busy.length ? `<p style="color:var(--warn);margin-top:12px">⚠ В ${busy.map(c => fdate(c.k)).join(', ')} сдавать сразу несколько заказов — начни один из них пораньше.</p>` : ''; })()}</div>`;
+};
 V.clients = () => {
   const m = new Map();
   for (const o of S.orders) { const k = (o.client || 'Без имени').trim(); if (!m.has(k)) m.set(k, []); m.get(k).push(o); }
   const list = [...m].map(([n, os]) => ({ n, os, sum: os.filter(o => o.col === 'done').reduce((s, o) => s + net(o), 0), last: os.map(o => o.created || '').sort().pop() })).sort((a, b) => b.sum - a.sum);
   return `<div class="card"><div class="ct">Клиенты <span>${list.length}</span></div>${list.length ? `<table class="tbl"><tr><th>Клиент</th><th>Заказов</th><th>Где</th><th class="n">Заработано</th><th class="n">Последний</th></tr>
-    ${list.map(c => `<tr><td><b>${esc(c.n)}</b>${c.os.length > 1 ? ' <span class="tg paid">постоянный</span>' : ''}</td><td>${c.os.length} (${c.os.filter(o => o.col === 'done').length} сдано)</td><td>${[...new Set(c.os.map(o => PLATS.find(p => p[0] === o.plat)?.[1]))].join(', ')}</td><td class="n"><b>${rub(c.sum)}</b></td><td class="n">${c.last ? fdate(c.last) : ''}</td></tr>`).join('')}</table>
+    ${list.map(c => `<tr><td><b>${esc(c.n)}</b>${c.os.length > 1 ? ' <span class="tg paid">постоянный</span>' : ''}${c.last && days(c.last, today()) > 30 && c.os.every(o => o.col === 'done') ? ` <span class="tg soon">${days(c.last, today())} дн. тишины</span> <button class="btn sm ghost" data-remind="${esc(c.n)}">Напомнить о себе</button>` : ''}</td><td>${c.os.length} (${c.os.filter(o => o.col === 'done').length} сдано)</td><td>${[...new Set(c.os.map(o => PLATS.find(p => p[0] === o.plat)?.[1]))].join(', ')}</td><td class="n"><b>${rub(c.sum)}</b></td><td class="n">${c.last ? fdate(c.last) : ''}</td></tr>`).join('')}</table>
     <p style="color:var(--ink2);margin-top:14px">Повторный клиент обходится в разы дешевле нового: напомни о себе тем, кто заказывал больше месяца назад.</p>` : '<div style="color:var(--muted)">Клиенты появятся вместе с заказами</div>'}</div>`;
 };
 
@@ -285,9 +335,10 @@ function orderForm(o) {
   <label class="ck" style="${o.col === 'done' ? '' : 'display:none'}" id="paidRow"><input type="checkbox" id="oPaid" ${o.paid ? 'checked' : ''}> Оплачено</label>
   <div class="f">Этапы <div class="checks" id="oChecks">${(o.checks || []).map(c => `<div class="ck ${c.d ? 'done' : ''}"><input type="checkbox" ${c.d ? 'checked' : ''}><input type="text" value="${esc(c.t)}"></div>`).join('')}<div class="ck"><input type="checkbox" disabled><input type="text" placeholder="+ этап (Enter)" id="newCk"></div></div></div>
   <label class="f">Заметки<textarea id="oNote" rows="3" placeholder="ТЗ, доступы, пожелания">${esc(o.note)}</textarea></label>
-  ${(o.logs || []).length ? `<div class="f">Время: ${hm(spent(o))}<div class="logs">${o.logs.slice().reverse().map(l => `<span>${fdate(l.date)} — ${hm(l.ms)}</span>`).join('')}</div></div>` : ''}
+  <div class="f">Время: <span id="oTime">${hm(spent(o))}</span><div class="addt"><input id="oMin" inputmode="numeric" placeholder="мин"><button class="btn sm ghost" id="oAddT">+ добавить вручную</button></div>
+    <div class="logs" id="oLogs">${(o.logs || []).slice().reverse().map(l => `<span>${fdate(l.date)} — ${hm(l.ms)}</span>`).join('')}</div></div>
   </div>
-  <div class="df">${isNew ? '' : '<button class="btn danger" id="oDel">Удалить</button>'}<span class="sp"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" id="oSave">Сохранить</button></div>`;
+  <div class="df">${isNew ? '' : '<button class="btn danger" id="oDel">Удалить</button><button class="btn ghost" id="oCheck" title="Текст для чека в «Мой налог»">🧾 Чек</button>'}<span class="sp"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" id="oSave">Сохранить</button></div>`;
   d.showModal(); if (isNew) setTimeout(() => $('#oTitle').focus(), 50);
   const upd = () => { const p = +$('#oPrice').value || 0, f = $('#oFee').value === '' ? PLATS.find(x => x[0] === $('#oPlat').value)[2] : +$('#oFee').value; $('#oNet').innerHTML = p ? `<span>Получишь на руки: <b>${rub(p * (1 - f / 100))}</b></span><span>Комиссия: <b>${rub(p * f / 100)}</b></span>` : '<span>Впиши цену — посчитаю, сколько придёт после комиссии</span>'; $('#paidRow').style.display = $('#oCol').value === 'done' ? '' : 'none'; };
   d.oninput = upd; d.onchange = e => { upd(); if (e.target.type === 'checkbox' && e.target.closest('#oChecks')) e.target.parentElement.classList.toggle('done', e.target.checked); }; upd();
@@ -295,12 +346,15 @@ function orderForm(o) {
   d.onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.matches('[data-close]')) d.close();
+    if (b.id === 'oAddT') { const m = +$('#oMin').value; if (!(m > 0)) return toast('Впиши минуты'); o.logs = o.logs || []; o.logs.push({ date: today(), ms: m * 60000 }); $('#oMin').value = ''; $('#oTime').textContent = hm(spent(o)); $('#oLogs').insertAdjacentHTML('afterbegin', `<span>${fdate(today())} — ${hm(m * 60000)}</span>`); if (o.id) save(); toast(`+${hm(m * 60000)}`); }
+    if (b.id === 'oCheck') { const txt = `Наименование: ${o.title}\nСумма: ${Math.round(net(o))}\nПокупатель: ${o.client || 'физическое лицо'}`; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Скопировано — вставь в «Мой налог» → Новая продажа'), () => prompt('Скопируй:', txt)); }
     if (b.id === 'oSave') {
       const title = $('#oTitle').value.trim(); if (!title) return toast('Напиши, что за заказ');
       const col = $('#oCol').value;
       const rec = Object.assign(o, { id: o.id || uid(), title, client: $('#oClient').value.trim(), plat: $('#oPlat').value, col, price: +$('#oPrice').value || 0, fee: $('#oFee').value === '' ? undefined : +$('#oFee').value, deadline: $('#oDl').value, note: $('#oNote').value.trim(), paid: col === 'done' && $('#oPaid').checked,
         checks: $$('#oChecks .ck').map(r => ({ d: r.children[0].checked, t: r.children[1].value.trim() })).filter(c => c.t), created: o.created || today() });
       if (col === 'done' && !rec.doneAt) rec.doneAt = today(); if (col !== 'done') delete rec.doneAt;
+      if (rec.paid && !rec.paidAt) rec.paidAt = today(); if (!rec.paid) delete rec.paidAt;
       if (!S.orders.includes(rec)) S.orders.push(rec);
       if (col === 'done' && S.timer?.id === rec.id) toggleTimer(null);
       save(); d.close(); render(); toast(isNew ? 'Заказ добавлен' : 'Сохранено');
@@ -339,9 +393,19 @@ document.addEventListener('click', e => {
   const mv = e.target.closest('[data-mv]'); if (mv) { e.stopPropagation(); const [id, c] = mv.dataset.mv.split('|'); return move(id, c); }
   const c = e.target.closest('[data-copy]'); if (c) { const tp = S.tpl.find(x => x.id === c.dataset.copy), v = Object.assign({ дата: fdate(today()) }, S.vars); const txt = tp.text.replace(/\{([а-яё]+)\}/gi, (m, k) => v[k] || m); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Скопировано'), () => prompt('Скопируй:', txt)); return; }
   const et = e.target.closest('[data-edtpl]'); if (et) return tplForm(S.tpl.find(x => x.id === et.dataset.edtpl));
+  const pd = e.target.closest('[data-paid]'); if (pd) { const o = S.orders.find(x => x.id === pd.dataset.paid); o.paid = true; o.paidAt = today(); save(); render(); return toast(`Оплата ${rub(net(o))} отмечена — не забудь чек 🧾`); }
+  const tx = e.target.closest('[data-tax]'); if (tx) { S.tax = +tx.dataset.tax; save(); return render(); }
+  const op = e.target.closest('[data-open]'); if (op) return orderForm(S.orders.find(x => x.id === op.dataset.open));
+  const rm = e.target.closest('[data-remind]'); if (rm) { const txt = `${rm.dataset.remind}, здравствуйте! Давно не общались — как вам результат прошлой работы? Если появятся новые задачи, буду рад помочь: могу взяться уже на этой неделе.`; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Текст скопирован — отправь клиенту'), () => prompt('Скопируй:', txt)); return; }
   const oc = e.target.closest('.oc'); if (oc && !e.target.closest('button')) orderForm(S.orders.find(x => x.id === oc.dataset.id));
 });
-$('#app').addEventListener('input', e => { if (e.target.dataset.var) { S.vars = { ...S.vars, [e.target.dataset.var]: e.target.value }; save(); const y = scrollY, f = e.target.dataset.var, pos = e.target.selectionStart; render(); const i = $(`[data-var="${f}"]`); i.focus(); i.setSelectionRange(pos, pos); scrollTo(0, y); } });
+// фильтр доски — без перерисовки, просто прячем карточки
+function filt() {
+  const q = ($('#fq')?.value || '').trim().toLowerCase(), p = $('#fp')?.value, h = $('#fh')?.checked;
+  $$('.oc').forEach(c => c.style.display = (!q || c.dataset.s.includes(q)) && (!p || c.dataset.p === p) && (!h || c.dataset.h) ? '' : 'none');
+}
+$('#app').addEventListener('change', e => { if (e.target.id === 'fp' || e.target.id === 'fh') filt(); if (e.target.id === 'goalIn') { S.goal = +e.target.value.replace(/\D/g, '') || 0; save(); render(); } });
+$('#app').addEventListener('input', e => { if (e.target.id === 'fq') filt(); if (e.target.dataset.var) { S.vars = { ...S.vars, [e.target.dataset.var]: e.target.value }; save(); const y = scrollY, f = e.target.dataset.var, pos = e.target.selectionStart; render(); const i = $(`[data-var="${f}"]`); i.focus(); i.setSelectionRange(pos, pos); scrollTo(0, y); } });
 // перетаскивание
 let dragId = null;
 document.addEventListener('dragstart', e => { const c = e.target.closest?.('.oc'); if (c) { dragId = c.dataset.id; c.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; } });

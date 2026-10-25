@@ -126,6 +126,19 @@ label.f { display: flex; flex-direction: column; gap: 6px; font-weight: 700; fon
 .emos { display: flex; gap: 6px; flex-wrap: wrap; }
 .emos button { border: 2px solid var(--line); background: #fff; border-radius: 12px; font-size: 22px; width: 46px; height: 46px; }
 .emos button.on { border-color: var(--coral); background: var(--coral2); }
+.seg { display: inline-flex; background: var(--bg); border-radius: 12px; padding: 4px; margin: 4px 0 10px; }
+.seg button { border: 0; background: none; padding: 7px 14px; border-radius: 9px; font-weight: 700; font-size: 14px; color: var(--ink2); }
+.seg button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+.prow { display: grid; grid-template-columns: 28px 1fr 120px; gap: 10px; align-items: center; margin-top: 8px; font-weight: 700; }
+.prow .av { width: 26px; height: 26px; font-size: 12px; margin: 0; border: 0; }
+.prow input { padding: 9px 12px !important; text-align: right; font-weight: 800; }
+.req { display: block; width: 100%; font-size: 13px; color: var(--violet); font-weight: 700; cursor: copy; margin-top: 2px; }
+.brow { cursor: pointer; border-radius: 12px; }
+.brow:hover { background: var(--bg); }
+.mst { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.mst b { display: block; font-size: 24px; font-weight: 900; }
+.mst span { color: var(--muted); font-size: 14px; }
+footer button { background: none; border: 0; color: var(--muted); text-decoration: underline; font-size: 14px; }
 .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 14px; opacity: 0; transition: .3s; pointer-events: none; font-weight: 600; z-index: 10; }
 .toast.on { opacity: 1; transform: translateX(-50%); }
 .banner { background: var(--violet); color: #fff; border-radius: 20px; padding: 18px 22px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; animation: in .4s; }
@@ -143,7 +156,7 @@ footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 3
     <div class="hd" id="hd"></div>
   </header>
   <main id="app"></main>
-  <footer>Без регистрации · данные хранятся в этом браузере · делись ссылкой — друзья увидят тот же расчёт</footer>
+  <footer>Без регистрации · данные хранятся в этом браузере · делись ссылкой — друзья увидят тот же расчёт<br><button id="exp">Скачать копию</button> · <button id="imp">Загрузить копию</button><input type="file" id="impf" accept=".json" hidden></footer>
 </div>
 <dialog id="dlg"></dialog>
 <div class="toast" id="toast"></div>
@@ -158,7 +171,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const uid = () => Math.random().toString(36).slice(2, 9);
 const rub = v => Math.round(v).toLocaleString('ru-RU') + ' ₽';
 const plural = (n, a, b, c) => { const m = Math.abs(n) % 100, k = m % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const fdate = d => new Date(d + 'T12:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
 function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.events)) return s; } catch (e) { } return { events: [], open: null }; }
@@ -176,7 +189,8 @@ function balances(e) {
   for (const x of e.exps) {
     const who = x.split.filter(id => b[id]); if (!who.length || !b[x.payer]) continue;
     b[x.payer].paid += x.amount;
-    const part = x.amount / who.length; who.forEach(id => b[id].share += part);
+    if (x.parts) who.forEach(id => b[id].share += x.parts[id] || 0); // точные суммы
+    else { const part = x.amount / who.length; who.forEach(id => b[id].share += part); }
   }
   for (const t of e.paid || []) { if (b[t.from]) b[t.from].paid += t.amount; if (b[t.to]) b[t.to].paid -= t.amount; } // отданные долги
   return e.people.map(p => ({ id: p.id, ...b[p.id], net: b[p.id].paid - b[p.id].share }));
@@ -195,6 +209,10 @@ function settle(e) {
   return out.filter(t => t.amount > 0);
 }
 const total = e => e.exps.reduce((s, x) => s + x.amount, 0);
+const shareOf = (x, id) => !x.split.includes(id) ? 0 : x.parts ? x.parts[id] || 0 : x.amount / x.split.length;
+// «1200+350*2» → 1900; только цифры и знаки, иначе NaN
+function calc(s) { s = String(s).replace(/\s/g, '').replace(/,/g, '.'); if (!/^[\d+\-*/.()]+$/.test(s)) return NaN; try { const v = Function('return (' + s + ')')(); return isFinite(v) ? Math.round(v * 100) / 100 : NaN; } catch (e) { return NaN; } }
+const pPay = (e, id) => e.people.find(p => p.id === id)?.pay || '';
 
 // ---------- шапка ----------
 function renderHd() {
@@ -215,7 +233,36 @@ function drawList() {
       ${e.exps.length ? `<span class="st ${left ? 'wait' : 'ok'}">${left ? `осталось ${left} ${plural(left, 'перевод', 'перевода', 'переводов')}` : 'все в расчёте ✓'}</span>` : ''}</button>`; }).join('')}
     <button class="ev new" id="newEv"><span style="font-size:34px">＋</span>Новое событие</button>
   </div>
+  ${myStats()}
   ${S.events.length ? '' : `<div class="card empty" style="margin-top:18px"><div class="big">🧾</div><b style="font-size:20px;color:var(--ink)">Как это работает</b><p style="margin-top:8px">1. Создай событие и добавь друзей.<br>2. Записывай, кто за что заплатил.<br>3. Скинемся посчитает минимум переводов, чтобы все были в расчёте.<br>4. Отправь ссылку в чат — у всех будет одна и та же картина.</p></div>`}`;
+}
+// личная статистика по событиям, где отмечено «это я»
+function myStats() {
+  const mine = S.events.filter(e => e.me && e.exps.length); if (!mine.length) return '';
+  let paid = 0, share = 0; const cat = {}, fr = {};
+  for (const e of mine) for (const x of e.exps) {
+    const s = shareOf(x, e.me); share += s; if (x.payer === e.me) paid += x.amount;
+    cat[x.cat || 'other'] = (cat[x.cat || 'other'] || 0) + s;
+    if (x.split.includes(e.me)) x.split.forEach(id => { if (id !== e.me) { const n = pName(e, id); fr[n] = (fr[n] || 0) + 1; } });
+  }
+  const tc = Object.entries(cat).sort((a, b) => b[1] - a[1])[0], c = CATS.find(c => c[0] === tc[0]);
+  const tf = Object.entries(fr).sort((a, b) => b[1] - a[1])[0];
+  return `<div class="card mine" style="margin-top:18px"><div class="ct">Твоя статистика <span>по ${mine.length} ${plural(mine.length, 'событию', 'событиям', 'событиям')}, где ты отмечен</span></div>
+    <div class="mst"><div><b>${rub(share)}</b><span>твоя доля трат</span></div><div><b>${rub(paid)}</b><span>заплатил сам</span></div>
+    <div><b>${c[1]} ${c[2]}</b><span>больше всего уходит · ${Math.round(tc[1] / share * 100)}%</span></div>${tf ? `<div><b>${esc(tf[0])}</b><span>с этим человеком скидываешься чаще всего · ${tf[1]} ${plural(tf[1], 'раз', 'раза', 'раз')}</span></div>` : ''}</div>
+    <div class="split-note" style="margin-top:12px">${paid > share * 1.3 ? 'Ты часто платишь за всех — не забывай собирать долги 🙂' : paid < share * 0.7 ? 'Обычно платят другие — может, в следующий раз угостишь ты?' : 'Платишь примерно столько же, сколько тратишь — честный баланс.'}</div></div>`;
+}
+function personInfo(e, id) {
+  const rows = e.exps.filter(x => x.payer === id || x.split.includes(id)), b = balances(e).find(z => z.id === id), d = $('#dlg');
+  d.innerHTML = `<div class="dh"><b>${av(e, id)} ${esc(pName(e, id))}</b><button class="x" data-close>✕</button></div>
+  <div class="db"><label class="f">Реквизиты для перевода<input id="pPay" value="${esc(pPay(e, id))}" placeholder="+7 900 000-00-00, Т-Банк" maxlength="60"></label>
+    <div class="split-note">Покажутся в «Кто кому переводит» и в тексте для чата</div>
+    <div class="exp">${rows.map(x => `<div class="erow"><span class="ic">${CATS.find(c => c[0] === (x.cat || 'other'))[1]}</span><span><b>${esc(x.title || 'Трата')}</b><small>${x.payer === id ? 'платил сам ' + rub(x.amount) : 'платил ' + esc(pName(e, x.payer))}</small></span><span class="a">${x.split.includes(id) ? '−' + rub(shareOf(x, id)) : '—'}</span></div>`).join('') || '<div class="empty">Нет трат</div>'}</div>
+    <div class="split-note" style="font-size:16px">Заплатил <b>${rub(b.paid)}</b>, его доля <b>${rub(b.share)}</b> → итог <b style="color:${b.net >= 0 ? 'var(--mint)' : 'var(--coral)'}">${b.net >= 0 ? '+' : '−'}${rub(Math.abs(b.net))}</b></div></div>
+  <div class="df"><button class="btn" id="pSave">Сохранить</button></div>`;
+  d.showModal();
+  d.oninput = null;
+  d.onclick = y => { const btn = y.target.closest('button'); if (!btn) return; if (btn.matches('[data-close]')) d.close(); if (btn.id === 'pSave') { e.people.find(p => p.id === id).pay = $('#pPay').value.trim(); save(); d.close(); render(); toast('Сохранено'); } };
 }
 function drawEvent() {
   const e = ev(); if (!e) { S.open = null; return drawList(); }
@@ -230,16 +277,16 @@ function drawEvent() {
         <form class="addp" id="addP"><input id="pName" placeholder="Имя друга" maxlength="20" autocomplete="off"><button class="btn sm">+</button></form></div></div>
     <div class="card s7"><div class="ct">Кто кому переводит <span>минимум переводов</span></div>
       ${!e.exps.length ? '<div class="empty"><div class="big">💸</div>Добавь первую трату — здесь появится, кто кому сколько должен</div>'
-        : st.length ? `<div class="transfers">${st.map(t => `<div class="tf"><div class="who">${av(e, t.from)}${esc(pName(e, t.from))}<span class="arr">→</span>${av(e, t.to)}${esc(pName(e, t.to))}</div><span class="amt">${rub(t.amount)}</span><button class="chk" data-pay="${t.from}|${t.to}|${t.amount}" title="Отметить: перевёл">✓</button></div>`).join('')}</div>
+        : st.length ? `<div class="transfers">${st.map(t => `<div class="tf"><div class="who">${av(e, t.from)}${esc(pName(e, t.from))}<span class="arr">→</span>${av(e, t.to)}${esc(pName(e, t.to))}${pPay(e, t.to) ? `<small class="req" data-cp="${esc(pPay(e, t.to))}" title="Скопировать">📱 ${esc(pPay(e, t.to))}</small>` : ''}</div><span class="amt">${rub(t.amount)}</span><button class="chk" data-pay="${t.from}|${t.to}|${t.amount}" title="Отметить: перевёл">✓</button></div>`).join('')}</div>
         <div class="split-note" style="margin-top:12px">Перевёл — нажми ✓, долг закроется у всех после новой ссылки.</div>` : '<div class="allok">🎉 Все в расчёте</div>'}
       ${(e.paid || []).length ? `<div class="transfers" style="margin-top:10px">${e.paid.map((t, k) => `<div class="tf done"><div class="who">${av(e, t.from)}${esc(pName(e, t.from))}<span class="arr">→</span>${av(e, t.to)}${esc(pName(e, t.to))}</div><span class="amt">${rub(t.amount)}</span><button class="chk" data-unpay="${k}" title="Отменить">✓</button></div>`).join('')}</div>` : ''}
     </div>
-    <div class="card s5"><div class="ct">Баланс <span>заплатил − его доля</span></div>
-      <div class="bal">${bal.map(b => `<div class="brow">${av(e, b.id)}<span class="nm">${esc(pName(e, b.id))}<small>заплатил ${rub(b.paid)}</small></span>
+    <div class="card s5"><div class="ct">Баланс <span>нажми на человека — подробно и реквизиты</span></div>
+      <div class="bal">${bal.map(b => `<div class="brow" data-pi="${b.id}">${av(e, b.id)}<span class="nm">${esc(pName(e, b.id))}<small>заплатил ${rub(b.paid)}</small></span>
         <div class="tr"><i style="${b.net >= 0 ? 'left:50%' : 'right:50%'};width:${Math.abs(b.net) / mx * 50}%;background:${b.net >= 0 ? 'var(--mint)' : 'var(--coral)'}"></i></div>
         <b style="color:${b.net > 0.5 ? 'var(--mint)' : b.net < -0.5 ? 'var(--coral)' : 'var(--muted)'}">${b.net > 0.5 ? '+' : b.net < -0.5 ? '−' : ''}${rub(Math.abs(b.net))}</b></div>`).join('')}</div></div>
     <div class="card s7"><div class="ct">Траты <span>${e.exps.length}</span><button class="btn sm r" id="addE">+ Трата</button></div>
-      ${e.exps.length ? `<div class="exp">${e.exps.slice().reverse().map(x => { const c = CATS.find(c => c[0] === (x.cat || 'other')); return `<div class="erow" data-ed="${x.id}" style="cursor:pointer"><span class="ic">${c[1]}</span><span><b>${esc(x.title || c[2])}</b><small>платил ${esc(pName(e, x.payer))} · ${x.split.length === e.people.length ? 'на всех' : 'на ' + x.split.map(id => esc(pName(e, id))).join(', ')}</small></span><span class="a">${rub(x.amount)}</span><button class="x" data-dele="${x.id}">✕</button></div>`; }).join('')}</div>`
+      ${e.exps.length ? `<div class="exp">${e.exps.slice().reverse().map(x => { const c = CATS.find(c => c[0] === (x.cat || 'other')); return `<div class="erow" data-ed="${x.id}" style="cursor:pointer"><span class="ic">${c[1]}</span><span><b>${esc(x.title || c[2])}</b><small>платил ${esc(pName(e, x.payer))} · ${x.split.length === e.people.length ? 'на всех' : 'на ' + x.split.map(id => esc(pName(e, id))).join(', ')}${x.parts ? ' · суммами' : ''}</small></span><span class="a">${rub(x.amount)}</span><button class="x" data-dele="${x.id}">✕</button></div>`; }).join('')}</div>`
         : `<div class="empty">${e.people.length < 2 ? 'Сначала добавь хотя бы двоих участников' : 'Пока ни одной траты'}</div>`}</div>
     <div class="card s5"><div class="ct">На что ушли деньги</div>${byCat.length ? `<div class="cats">${byCat.map(c => `<div class="cat"><span>${c.ic}</span><div><div style="font-size:14px;margin-bottom:4px">${c.n} · ${Math.round(c.v / sum * 100)}%</div><div class="tr"><i style="width:${c.v / cmx * 100}%;background:var(--coral)"></i></div></div><b>${rub(c.v)}</b></div>`).join('')}</div>` : '<div class="empty">Нет трат</div>'}</div>
   </div>`;
@@ -255,8 +302,8 @@ function evForm(e) {
     <div class="f">Значок<div class="emos">${EV_EMO.map(m => `<button data-emo="${m}" class="${e.emo === m ? 'on' : ''}">${m}</button>`).join('')}</div></div>
     <label class="f">Дата<input type="date" id="eDate" value="${e.date}"></label>
     ${isNew ? '<label class="f">Участники через запятую<input id="ePeople" placeholder="Я, Аня, Макс, Лёша"></label><div class="split-note">Первое имя — это ты (можно поменять потом).</div>' : ''}</div>
-  <div class="df">${isNew ? '' : '<button class="btn ghost" id="eDel" style="color:var(--coral);margin-right:auto">Удалить</button>'}<button class="btn" id="eSave">${isNew ? 'Создать' : 'Сохранить'}</button></div>`;
-  d.showModal(); setTimeout(() => $('#eName').focus(), 50);
+  <div class="df">${isNew ? '' : '<button class="btn ghost" id="eDel" style="color:var(--coral);margin-right:auto">Удалить</button><button class="btn ghost" id="eDup">Новое с теми же людьми</button>'}<button class="btn" id="eSave">${isNew ? 'Создать' : 'Сохранить'}</button></div>`;
+  d.showModal(); d.oninput = null; setTimeout(() => $('#eName').focus(), 50);
   let emo = e.emo;
   d.onclick = x => {
     const b = x.target.closest('button'); if (!b) return;
@@ -271,6 +318,7 @@ function evForm(e) {
       } else Object.assign(e, { name, emo, date: $('#eDate').value || e.date });
       save(); d.close(); render();
     }
+    if (b.id === 'eDup') { const ne = { id: uid(), name: e.name + ' (ещё раз)', emo: e.emo, date: today(), people: e.people.map(p => ({ ...p })), exps: [], paid: [], me: e.me }; S.events.push(ne); S.open = ne.id; save(); d.close(); render(); toast('Новое событие — люди те же'); }
     if (b.id === 'eDel' && confirm('Удалить событие «' + e.name + '»?')) { S.events = S.events.filter(y => y.id !== e.id); S.open = null; save(); d.close(); render(); }
   };
 }
@@ -280,28 +328,55 @@ function expForm(x) {
   const d = $('#dlg');
   d.innerHTML = `<div class="dh"><b>${isNew ? 'Новая трата' : 'Трата'}</b><button class="x" data-close>✕</button></div>
   <div class="db">
-    <input id="xAmt" class="amt-in" inputmode="decimal" placeholder="0 ₽" value="${x.amount}">
+    <input id="xAmt" class="amt-in" inputmode="decimal" placeholder="0 ₽" value="${x.amount}" autocomplete="off">
+    <div class="split-note" id="xCalc" style="text-align:center;margin-top:-6px">можно считать прямо тут: 1200+350*2</div>
+    <div class="chips" style="justify-content:center"><button class="chip" data-tip="10">+10% чаевые</button><button class="chip" data-tip="15">+15%</button><button class="chip" data-tip="-10">−10% скидка</button></div>
     <div class="chips" id="xCat">${CATS.map(([k, ic, n]) => `<button class="chip ${x.cat === k ? 'on' : ''}" data-cat="${k}">${ic} ${n}</button>`).join('')}</div>
     <label class="f">За что<input id="xTitle" value="${esc(x.title)}" placeholder="например: продукты в Пятёрочке" maxlength="50"></label>
     <div class="f">Кто платил<div class="chips" id="xPayer">${e.people.map(p => `<button class="chip ${x.payer === p.id ? 'on' : ''}" data-payer="${p.id}">${av(e, p.id)}${esc(p.name)}</button>`).join('')}</div></div>
-    <div class="f">На кого делим <span class="split-note" id="xNote"></span><div class="chips" id="xSplit">${e.people.map(p => `<button class="chip ${x.split.includes(p.id) ? 'on' : ''}" data-sp="${p.id}">${av(e, p.id)}${esc(p.name)}</button>`).join('')}</div></div>
+    <div class="f">На кого делим <span class="split-note" id="xNote"></span>
+      <div class="seg" id="xMode"><button data-mode="eq" class="${x.parts ? '' : 'on'}">Поровну</button><button data-mode="ex" class="${x.parts ? 'on' : ''}">Точными суммами</button></div>
+      <div class="chips" id="xSplit">${e.people.map(p => `<button class="chip ${x.split.includes(p.id) ? 'on' : ''}" data-sp="${p.id}">${av(e, p.id)}${esc(p.name)}</button>`).join('')}</div>
+      <div id="xParts"></div></div>
   </div>
   <div class="df"><button class="btn" id="xSave">${isNew ? 'Добавить' : 'Сохранить'}</button></div>`;
   d.showModal(); setTimeout(() => $('#xAmt').focus(), 50);
-  const note = () => { const a = parseFloat($('#xAmt').value.replace(',', '.')), n = $$('#xSplit .on').length; $('#xNote').textContent = a > 0 && n ? `— по ${rub(a / n)} с каждого` : ''; };
-  d.oninput = note; note();
+  let mode = x.parts ? 'ex' : 'eq'; const parts = { ...(x.parts || {}) };
+  const amt = () => calc($('#xAmt').value);
+  const drawParts = () => {
+    const box = $('#xParts'), sel = $$('#xSplit .on').map(c => c.dataset.sp);
+    box.innerHTML = mode === 'ex' ? sel.map(id => `<label class="prow">${av(e, id)}<span>${esc(pName(e, id))}</span><input data-part="${id}" inputmode="decimal" value="${parts[id] ?? ''}" placeholder="0"></label>`).join('') : '';
+  };
+  const note = () => {
+    const a = amt(), n = $$('#xSplit .on').length, raw = $('#xAmt').value;
+    $('#xCalc').textContent = /[+\-*/]/.test(raw.replace(/^-/, '')) && a > 0 ? `= ${rub(a)}` : 'можно считать прямо тут: 1200+350*2';
+    if (mode === 'eq') { $('#xNote').textContent = a > 0 && n ? `— по ${rub(a / n)} с каждого` : ''; return; }
+    const sum = $$('#xSplit .on').reduce((s, c) => s + (calc(parts[c.dataset.sp] || 0) || 0), 0), left = (a || 0) - sum;
+    $('#xNote').innerHTML = Math.abs(left) < 1 ? '— <b style="color:var(--mint)">всё распределено ✓</b>' : left > 0 ? `— осталось распределить <b>${rub(left)}</b>` : `— <b style="color:var(--coral)">лишние ${rub(-left)}</b>`;
+  };
+  d.oninput = y => { if (y.target.dataset.part) parts[y.target.dataset.part] = y.target.value; note(); };
+  drawParts(); note();
   d.onclick = y => {
     const b = y.target.closest('button'); if (!b) return;
     if (b.matches('[data-close]')) d.close();
     if (b.dataset.cat) $$('#xCat .chip').forEach(c => c.classList.toggle('on', c === b));
     if (b.dataset.payer) $$('#xPayer .chip').forEach(c => c.classList.toggle('on', c === b));
-    if (b.dataset.sp) { b.classList.toggle('on'); note(); }
+    if (b.dataset.sp) { b.classList.toggle('on'); drawParts(); note(); }
+    if (b.dataset.mode) { mode = b.dataset.mode; $$('#xMode button').forEach(c => c.classList.toggle('on', c === b)); drawParts(); note(); }
+    if (b.dataset.tip) { const a = amt(); if (a > 0) { $('#xAmt').value = Math.round(a * (1 + b.dataset.tip / 100)); note(); } }
     if (b.id === 'xSave') {
-      const amount = parseFloat($('#xAmt').value.replace(',', '.').replace(/\s/g, ''));
+      const amount = amt();
       const split = $$('#xSplit .on').map(c => c.dataset.sp);
       if (!(amount > 0)) return toast('Впиши сумму');
       if (!split.length) return toast('Выбери, на кого делить');
+      let px = null;
+      if (mode === 'ex') {
+        px = Object.fromEntries(split.map(id => [id, calc(parts[id] || 0) || 0]));
+        const diff = amount - Object.values(px).reduce((s, v) => s + v, 0);
+        if (Math.abs(diff) >= 1) return toast(diff > 0 ? `Не распределено ${rub(diff)}` : `Распределено больше на ${rub(-diff)}`);
+      }
       const rec = { id: isNew ? uid() : x.id, amount, title: $('#xTitle').value.trim(), cat: $('#xCat .on')?.dataset.cat || 'other', payer: $('#xPayer .on').dataset.payer, split };
+      if (px) rec.parts = px;
       e.exps = e.exps.filter(z => z.id !== rec.id).concat(rec); save(); d.close(); render(); toast(isNew ? 'Трата добавлена' : 'Сохранено');
     }
   };
@@ -324,8 +399,10 @@ function copy(t, msg) { (navigator.clipboard ? navigator.clipboard.writeText(t) 
 // ---------- события ----------
 $('#home').onclick = () => { S.open = null; save(); render(); };
 $('#app').addEventListener('click', x => {
-  const b = x.target.closest('button, [data-me], [data-ed]'); if (!b) return;
+  const b = x.target.closest('button, [data-me], [data-ed], [data-pi], [data-cp]'); if (!b) return;
   const e = ev();
+  if (b.dataset.cp) return copy(b.dataset.cp, 'Реквизиты скопированы');
+  if (b.dataset.pi && e) return personInfo(e, b.dataset.pi);
   if (b.id === 'newEv') return evForm();
   if (b.dataset.ev) { S.open = b.dataset.ev; save(); render(); window.scrollTo(0, 0); return; }
   if (b.id === 'back') { S.open = null; save(); render(); return; }
@@ -345,7 +422,7 @@ $('#app').addEventListener('click', x => {
   if (b.id === 'share') return copy(shareLink(e), 'Ссылка скопирована — кинь в чат');
   if (b.id === 'copyTxt') {
     const st = settle(e);
-    const t = `${e.emo} ${e.name} — ${rub(total(e))}, по ${rub(total(e) / e.people.length)} на человека\n\n` + (st.length ? 'Кто кому переводит:\n' + st.map(t => `• ${pName(e, t.from)} → ${pName(e, t.to)}: ${rub(t.amount)}`).join('\n') : 'Все в расчёте 🎉') + `\n\nПодробно: ${shareLink(e)}`;
+    const t = `${e.emo} ${e.name} — ${rub(total(e))}, по ${rub(total(e) / e.people.length)} на человека\n\n` + (st.length ? 'Кто кому переводит:\n' + st.map(t => `• ${pName(e, t.from)} → ${pName(e, t.to)}: ${rub(t.amount)}${pPay(e, t.to) ? ` (${pPay(e, t.to)})` : ''}`).join('\n') : 'Все в расчёте 🎉') + `\n\nПодробно: ${shareLink(e)}`;
     return copy(t, 'Текст скопирован — вставь в чат');
   }
   if (b.id === 'evEdit') return evForm(e);
@@ -357,6 +434,9 @@ $('#app').addEventListener('submit', x => {
   e.people.push({ id: uid(), name: n }); // старые траты не трогаем: новенький в них не участвовал
   save(); render(); setTimeout(() => $('#pName')?.focus(), 30);
 });
+$('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' })); a.download = `skinemsya-${today()}.json`; a.click(); toast('Копия скачана'); };
+$('#imp').onclick = () => $('#impf').click();
+$('#impf').onchange = x => { const f = x.target.files[0]; if (!f) return; f.text().then(t => { try { const s = JSON.parse(t); if (!Array.isArray(s.events)) throw 0; S = s; S.open = null; save(); render(); toast('Копия загружена'); } catch (er) { toast('Это не файл Скинемся'); } }); x.target.value = ''; };
 readHash(); render();
 addEventListener('hashchange', () => { if (/#e=/.test(location.hash)) { S.open = null; readHash(); render(); } });
 </script>
